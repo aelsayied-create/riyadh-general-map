@@ -275,6 +275,7 @@ async function start() {
     html: `<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="${POI_SYM[k].bg}" stroke="#fff" stroke-width="2"/>${POI_SYM[k].g}</svg>` });
   const poiTip = (k, p) => `<div dir="rtl"><b>${esc(p.name_ar || p.name_en || POI_SYM[k].ar)}</b><br><small>${POI_SYM[k].ar}${p.stars ? ` · ${"★".repeat(Math.min(+p.stars || 0, 5))}` : ""}${p.name_en && p.name_ar ? ` · <span lang="en">${esc(p.name_en)}</span>` : ""}</small></div>`;
   let OSM = null;
+  const osmGet = n => (window.EMBED && ("osm/" + n) in window.EMBED) ? Promise.resolve(window.EMBED["osm/" + n]) : fetch(`data/osm/${n}`).then(r => r.ok ? r.json() : null);
   const loadedTiles = new Set();
   function loadStreetTiles() {
     if (!OSM || !OSM.street_tiles || !on.streets || map.getZoom() < 14) return;
@@ -284,16 +285,16 @@ async function start() {
       const tb = L.latLngBounds([s0 + cy * c, w0 + cx * c], [s0 + (cy + 1) * c, w0 + (cx + 1) * c]);
       if (!b.pad(0.2).intersects(tb)) return;
       loadedTiles.add(key);
-      fetch(`data/osm/streets/${key}.geojson`).then(r => r.json()).then(fc => {
+      osmGet(`streets/${key}.geojson`).then(fc => { if (!fc) throw 0;
         L.geoJSON(fc, { renderer: streetCanvas, style: f => ({ color: "#9a9a9a", weight: f.properties.class === "tertiary" ? 2.2 : 1.4, opacity: 0.95 }),
           onEachFeature: (f, l) => { if (f.properties.name_ar || f.properties.name_en) l.bindTooltip(`<div dir="rtl">${esc(f.properties.name_ar || f.properties.name_en)}</div>`, { sticky: true }); } }).addTo(osmStreetsL);
       }).catch(() => loadedTiles.delete(key));
     });
   }
-  fetch("data/osm/manifest.json").then(r => r.ok ? r.json() : null).then(async m => {
+  osmGet("manifest.json").then(async m => {
     if (!m) return;
     OSM = m;
-    const j = n => fetch(`data/osm/${n}`).then(r => r.ok ? r.json() : null).catch(() => null);
+    const j = n => osmGet(n).catch(() => null);
     const [roads, parks, ...pois] = await Promise.all([j("roads.geojson"), j("parks.geojson"), ...Object.keys(POI_SYM).map(k => j(`poi_${k}.geojson`))]);
     if (roads) {
       const order = ["secondary", "primary", "trunk", "motorway"];
