@@ -1,12 +1,6 @@
 # Riyadh General Map · الخريطة العامة للرياض
 
-Leaflet map of Riyadh Region built from open data, with coordinate search (decimal, DMS, UTM 38N), drawing tools with KML export, four background maps and a built-in password.
-
-## Password
-Built-in password: **`Riyadh@2026`**
-- Netlify server check: `DEFAULT_PASSWORD` in `netlify/edge-functions/password.ts` (override with `netlify env:set PROTECTED_PAGE_PASSWORD "..."`).
-- Page password screen: `PW_HASH` in `web/app.js` (SHA-256 of the password).
-  - Python: `python -c "import hashlib;print(hashlib.sha256(b'NewPass').hexdigest())"`
+Leaflet map of Riyadh Region built from open data, with coordinate search (decimal, DMS, UTM 38N), drawing tools with KML export and four background maps. No password: the map is open to anyone with the link.
 
 ## Deploy to Netlify
 ```bash
@@ -14,6 +8,7 @@ netlify login
 netlify sites:create --name riyadh-general-map
 netlify deploy --prod
 ```
+Drag-and-drop on app.netlify.com/drop also works, using the `web` folder.
 
 ## Layers and symbology
 | Layer | Source | Symbol |

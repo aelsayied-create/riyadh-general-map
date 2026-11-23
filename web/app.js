@@ -2,29 +2,6 @@
 {
 const $ = id => document.getElementById(id);
 
-// ---------------- built-in password (SHA-256 of the password; see README to change it)
-const PW_HASH = "29811764bb9dd62d077118f2d83f923c61cbcc2606d0fb15da62f38ba25845c9";
-const KEY = "ryd-map-ok";
-const store = { get: () => { try { return sessionStorage.getItem(KEY); } catch (e) { return null; } },
-  set: v => { try { v ? sessionStorage.setItem(KEY, v) : sessionStorage.removeItem(KEY); } catch (e) {} } };
-const serverOk = () => /(?:^|;\s*)rgm_ok=1/.test(document.cookie); // set by the Netlify password check
-async function sha256(t) {
-  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t));
-  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
-}
-let started = false;
-function unlock() { $("gate").hidden = true; document.body.classList.remove("locked"); if (!started) { started = true; start(); } }
-$("gateForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  if (await sha256($("pw").value) === PW_HASH) { store.set(PW_HASH); unlock(); }
-  else { $("gateErr").hidden = false; $("pw").select(); }
-});
-$("lock").addEventListener("click", () => {
-  store.set(null);
-  if (serverOk()) { location.href = "/__logout"; return; }
-  $("pw").value = ""; $("gateErr").hidden = true; $("gate").hidden = false; document.body.classList.add("locked"); $("pw").focus();
-});
-
 // ---------------- coordinate maths
 const R2D = 180 / Math.PI, D2R = Math.PI / 180;
 function toUTM(lat, lon) {
@@ -533,5 +510,5 @@ ${pm}
   if (window.matchMedia("(max-width:860px)").matches) $("layerbox").open = false;
   intro();
 }
-if (serverOk() || store.get() === PW_HASH) unlock();
+start();
 }
