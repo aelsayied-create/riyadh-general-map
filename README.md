@@ -1,10 +1,6 @@
 # Riyadh General Map · الخريطة العامة للرياض
 
-Leaflet web map of Riyadh Region built from open data: coordinate search (decimal, DMS, UTM 38N), drawing tools with KML export, four background maps (Gray, OpenStreetMap, Streets, Satellite). Arabic, right-to-left. Password-protected on Netlify.
-
-## Password
-Built-in password: **`Riyadh@2026`** — checked on Netlify's server (`netlify/edge-functions/password.ts`), so the page and the data are never sent without it.
-To change it without editing code: Netlify → Site configuration → Environment variables → `PROTECTED_PAGE_PASSWORD`, then redeploy.
+Leaflet web map of Riyadh Region built from open data: coordinate search (decimal, DMS, UTM 38N), drawing tools with KML export, four background maps (Gray, OpenStreetMap, Streets, Satellite). Arabic, right-to-left. Public on Netlify (no password).
 
 ## Publish on Netlify
 **Option A — from this folder (quickest):**
@@ -13,15 +9,15 @@ netlify login
 netlify sites:create --name riyadh-general-map
 netlify deploy --prod
 ```
-(Use the CLI: Netlify's drag-and-drop upload does not run the password function.)
+(Or drag the `web` folder onto Netlify's deploy page.)
 
 **Option B — connected to GitHub (adds the OpenStreetMap layers and keeps all data up to date):**
 1. Push this folder to a GitHub repository.
 2. Netlify → Add new site → Import an existing project → choose the repository. Netlify reads `netlify.toml` (publish folder `web`).
-3. The workflow `.github/workflows/update-data.yml` downloads OpenStreetMap (streets, parks, hotels, places) and the latest Royal Commission transport data on the first run and on the 1st of every month, commits it, and Netlify redeploys automatically.
+3. The workflow `.github/workflows/update-data.yml` downloads OpenStreetMap (streets, parks, hotels, places) and the latest Royal Commission transport data on the first run and on the 1st of every month, commits it, and Netlify redeploys (see Netlify credits below).
    To refresh now: GitHub → Actions → Update map data → Run workflow.
 
-The site is published only on Netlify (behind the password); nothing is published on GitHub Pages.
+The site is published on Netlify; nothing is published on GitHub Pages.
 
 ## Layers and symbology
 | Group | Layer | Source | Symbol |

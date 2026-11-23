@@ -723,6 +723,5 @@ ${pm}
   if (window.matchMedia("(max-width:860px)").matches) $("layerbox").open = false;
   intro();
 }
-if (/(?:^|;\s*)rgm_ok=1/.test(document.cookie)) $("logout").hidden = false; // signed in through the Netlify password
 start();
 }
