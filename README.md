@@ -1,15 +1,27 @@
 # Riyadh General Map · الخريطة العامة للرياض
 
-Leaflet web map of Riyadh Region built from open data: coordinate search (decimal, DMS, UTM 38N), drawing tools with KML export, four background maps (Gray, OpenStreetMap, Streets, Satellite). Arabic, right-to-left. No password.
+Leaflet web map of Riyadh Region built from open data: coordinate search (decimal, DMS, UTM 38N), drawing tools with KML export, four background maps (Gray, OpenStreetMap, Streets, Satellite). Arabic, right-to-left. Password-protected on Netlify.
 
-## How it is published (GitHub Pages)
-Every push to `main` runs `.github/workflows/osm-and-pages.yml`:
-1. If `web/data/osm/` is empty (first run), it downloads OpenStreetMap data for Riyadh with the Overpass API (`scripts/fetch_osm.py`) and commits it.
-2. It publishes the `web/` folder to GitHub Pages.
+## Password
+Built-in password: **`Riyadh@2026`** — checked on Netlify's server (`netlify/edge-functions/password.ts`), so the page and the data are never sent without it.
+To change it without editing code: Netlify → Site configuration → Environment variables → `PROTECTED_PAGE_PASSWORD`, then redeploy.
 
-The OpenStreetMap data is refreshed automatically on the 1st of every month. To refresh it now: **Actions → OpenStreetMap data + GitHub Pages → Run workflow**.
+## Publish on Netlify
+**Option A — from this folder (quickest):**
+```bash
+netlify login
+netlify sites:create --name riyadh-general-map
+netlify deploy --prod
+```
+(Use the CLI: Netlify's drag-and-drop upload does not run the password function.)
 
-If the first run stops at "configure-pages": open **Settings → Pages**, set **Source: GitHub Actions**, then re-run the workflow.
+**Option B — connected to GitHub (adds the OpenStreetMap layers and keeps all data up to date):**
+1. Push this folder to a GitHub repository.
+2. Netlify → Add new site → Import an existing project → choose the repository. Netlify reads `netlify.toml` (publish folder `web`).
+3. The workflow `.github/workflows/update-data.yml` downloads OpenStreetMap (streets, parks, hotels, places) and the latest Royal Commission transport data on the first run and on the 1st of every month, commits it, and Netlify redeploys automatically.
+   To refresh now: GitHub → Actions → Update map data → Run workflow.
+
+The site is published only on Netlify (behind the password); nothing is published on GitHub Pages.
 
 ## Layers and symbology
 | Group | Layer | Source | Symbol |
@@ -17,10 +29,11 @@ If the first run stops at "configure-pages": open **Settings → Pages**, set **
 | Boundaries | Riyadh Region | geoBoundaries ADM1 (CC BY 4.0) | dark line on a white halo |
 | | Governorates (23) | geoBoundaries ADM2; Arabic names added | brown dash-dot line |
 | | Districts (711) | National Address (maps.address.gov.sa) via homaily (GPL-3.0) | thin outline, hover highlight, names from zoom 12.5 |
-| Transport | Riyadh Metro (6 lines), stations (83) | Riyadh Bus (riyadhbus.sa) via aqar-app — informational use | official line colours on white casing; white station discs, interchanges with black ring |
+| Transport | Riyadh Metro (6 lines), stations (83, with station type) | Royal Commission for Riyadh City open data (opendata.rcrc.gov.sa, KSA Open Data License) | official line colours on white casing; white station discs, interchanges with black ring |
 | | Airports (24) and helipads (22) | OurAirports (public domain) | icon per class: international, domestic, under construction, air base, airstrip, helipad |
-| | Bus stops (2,430), park-and-ride (19), on-demand zones (12) | Riyadh Bus via aqar-app | blue dots (from zoom 12.5), blue lots with "P", dashed green zones |
-| | Bus routes | OpenStreetMap | route colour on white casing |
+| | Bus routes (88 lines: 3 BRT, 6 main, 20 community, 59 feeder) | RCRC open data | navy 5 px (BRT), blue (main), teal (community), light blue (feeder), on white casing |
+| | Bus stops (3,010) by shelter type | RCRC open data | terminal / BRT station / AC shelter / open shelter / pole — size and colour by type, shown progressively from zoom 11 to 15 |
+| | Park-and-ride (19), on-demand zones (12) | Riyadh Bus via aqar-app — informational use | blue lots with "P", dashed green zones |
 | | Regional highways, railway | Natural Earth (public domain) | red with dark casing; black/white dashes |
 | OpenStreetMap | Highways (motorway, trunk) | OpenStreetMap (ODbL) | red on dark-red casing |
 | | Main streets (primary, secondary) | OpenStreetMap | white on gray casing |
@@ -33,6 +46,7 @@ If the first run stops at "configure-pages": open **Settings → Pages**, set **
 ## Files
 - `web/` — the site (`index.html`, `app.js`, `style.css`, `data/`)
 - `scripts/fetch_osm.py` — OpenStreetMap download and preparation (runs on GitHub)
+- `scripts/rcrc_transport.py` — builds metro and bus layers from RCRC open data (`data_src/rcrc/`; `--download` refreshes from the portal)
 - Full-resolution GIS layers: `Riyadh_General_Map.gdb` / `.gpkg` (delivered separately)
 
-Data © OpenStreetMap contributors (ODbL), geoBoundaries (CC BY 4.0), Natural Earth, OurAirports, National Address via homaily (GPL-3.0), Riyadh Bus via aqar-app. Boundaries and names do not imply official endorsement.
+Data © OpenStreetMap contributors (ODbL), geoBoundaries (CC BY 4.0), Natural Earth, OurAirports, National Address via homaily (GPL-3.0), Royal Commission for Riyadh City open data (KSA Open Data License), Riyadh Bus via aqar-app. Boundaries and names do not imply official endorsement.
