@@ -203,12 +203,12 @@ async function start() {
   // bus: stops on a canvas (2,400 points), park-and-ride lots, on-demand zones
   const busCanvas = L.canvas({ pane: "pts", padding: 0.3 });
   const SHELTER_SYM = {
-    terminal: { radius: 7,   color: "#ffffff", weight: 2,   fillColor: "#0b2e59", z: 11 },
-    brt:      { radius: 5.5, color: "#ffffff", weight: 1.8, fillColor: "#0b3c8c", z: 12 },
-    ac_large: { radius: 4.8, color: "#ffffff", weight: 1.5, fillColor: "#1565c0", z: 13 },
-    ac:       { radius: 4.2, color: "#ffffff", weight: 1.4, fillColor: "#1e88e5", z: 13 },
-    open:     { radius: 3.6, color: "#1e88e5", weight: 1.6, fillColor: "#ffffff", z: 14 },
-    pole:     { radius: 2.6, color: "#ffffff", weight: 0.8, fillColor: "#64b5f6", z: 15 },
+    terminal: { radius: 7,   color: "#ffffff", weight: 2,   fillColor: "#4a9e4a", z: 11 },
+    brt:      { radius: 5.5, color: "#ffffff", weight: 1.8, fillColor: "#5db75d", z: 12 },
+    ac_large: { radius: 4.8, color: "#ffffff", weight: 1.5, fillColor: "#6fc46f", z: 13 },
+    ac:       { radius: 4.2, color: "#ffffff", weight: 1.4, fillColor: "#86cf86", z: 13 },
+    open:     { radius: 3.6, color: "#6fc46f", weight: 1.8, fillColor: "#ffffff", z: 14 },
+    pole:     { radius: 2.8, color: "#ffffff", weight: 0.8, fillColor: "#9fd99f", z: 15 },
   };
   const busByType = Object.fromEntries(Object.keys(SHELTER_SYM).map(k => [k, L.layerGroup()]));
   BS.features.forEach(f => { const p = f.properties, [x, y] = f.geometry.coordinates, sym = SHELTER_SYM[p.shelter] || SHELTER_SYM.pole;
@@ -217,15 +217,15 @@ async function start() {
       .addTo(busByType[p.shelter] || busByType.pole); });
   const busL = L.layerGroup(Object.values(busByType));
   const ROUTE_SYM = {
-    brt:       { ar: "نقل سريع (BRT)", color: "#0b3c8c", weight: 5 },
-    main:      { ar: "خط رئيسي",       color: "#1976d2", weight: 3.6 },
-    community: { ar: "خط مجتمعي",      color: "#00897b", weight: 2.8 },
-    feeder:    { ar: "خط مغذٍّ",        color: "#64b5f6", weight: 2.2 },
+    brt:       { ar: "نقل سريع (BRT)", color: "#5db75d", weight: 5 },
+    main:      { ar: "خط رئيسي",       color: "#74c474", weight: 3.6 },
+    community: { ar: "خط مجتمعي",      color: "#8fd18f", weight: 2.8 },
+    feeder:    { ar: "خط مغذٍّ",        color: "#a9dca9", weight: 2.2 },
   };
   const order = ["feeder", "community", "main", "brt"];
   const BRs = { ...BR, features: BR.features.slice().sort((a, b) => order.indexOf(a.properties.kind) - order.indexOf(b.properties.kind)) };
   const brL = L.layerGroup([
-    L.geoJSON(BRs, { pane: "lines", interactive: false, style: f => ({ color: "#ffffff", weight: ROUTE_SYM[f.properties.kind].weight + 2.5, opacity: 0.9 }) }),
+    L.geoJSON(BRs, { pane: "lines", interactive: false, style: f => ({ color: "#3e7f3e", weight: ROUTE_SYM[f.properties.kind].weight + 1.6, opacity: 0.45 }) }),
     L.geoJSON(BRs, { pane: "lines", style: f => ({ color: ROUTE_SYM[f.properties.kind].color, weight: ROUTE_SYM[f.properties.kind].weight, opacity: 0.95 }),
       onEachFeature: (f, l) => { const p = f.properties;
         l.bindTooltip(`<div dir="rtl"><b>خط الحافلات ${esc(p.line)}</b> <small>${ROUTE_SYM[p.kind].ar}</small><br><small>${esc(p.from_ar || p.from_en || "")}${p.to_ar || p.to_en ? " ← " + esc(p.to_ar || p.to_en) : ""} · ${p.length_km} كم</small></div>`, { sticky: true });
@@ -331,8 +331,8 @@ async function start() {
     ["hw", "الطرق الإقليمية (Natural Earth)", hwL, false, `<i class="ln" style="background:#e3262b;box-shadow:0 0 0 1px #7f0000"></i>`],
     ["rail", "السكك الحديدية", rwL, false, `<i class="ln" style="background:repeating-linear-gradient(90deg,#3b3b3b 0 5px,#fff 5px 10px);box-shadow:0 0 0 1px #3b3b3b"></i>`],
     ["air", "المطارات", apL, true, `<i class="ico" style="background:#0b3c5d"></i>`],
-    ["busRoutes", "خطوط الحافلات", brL, false, `<i class="ln" style="background:linear-gradient(90deg,#0b3c8c 0 25%,#1976d2 25% 50%,#00897b 50% 75%,#64b5f6 75%)"></i>`],
-    ["bus", "مواقف الحافلات", busL, false, `<i class="dot" style="background:#1e88e5;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px #1e88e5"></i>`],
+    ["busRoutes", "خطوط الحافلات", brL, false, `<i class="ln" style="background:linear-gradient(90deg,#5db75d 0 25%,#74c474 25% 50%,#8fd18f 50% 75%,#a9dca9 75%)"></i>`],
+    ["bus", "مواقف الحافلات", busL, false, `<i class="dot" style="background:#86cf86;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px #5db75d"></i>`],
     ["pr", "مواقف «اركن وارتحل»", prL, false, `<i style="background:rgba(0,176,240,.35);border:1.5px solid #0077b6;color:#0077b6;font-style:normal;font-size:9px;font-weight:700;line-height:9px;text-align:center">P</i>`],
     ["drt", "مناطق النقل عند الطلب", drtL, false, `<i style="background:rgba(122,210,96,.2);border:1.5px dashed #2e7d32"></i>`],
     ["الشوارع والأماكن (OpenStreetMap)"],
