@@ -27,7 +27,7 @@ The site is published only on Netlify (behind the password); nothing is publishe
 | Group | Layer | Source | Symbol |
 |---|---|---|---|
 | Boundaries | Riyadh Region | geoBoundaries ADM1 (CC BY 4.0) | dark line on a white halo |
-| | Governorates (23) | geoBoundaries ADM2; Arabic names added | brown dash-dot line |
+| | Sub-municipalities (17: 16 of Amanat Riyadh + Diplomatic Quarter) | districts merged by sub-municipality, using the neighbourhood lists on Wikipedia and the Amanat Riyadh site (`data_src/district_municipality.csv`, `scripts/build_municipalities.py`) | brown dash-dot line, names at zoom 10–13 |
 | | Districts (711) | National Address (maps.address.gov.sa) via homaily (GPL-3.0) | thin outline, hover highlight, names from zoom 12.5 |
 | Transport | Riyadh Metro (6 lines), stations (83, with station type) | Royal Commission for Riyadh City open data (opendata.rcrc.gov.sa, KSA Open Data License) | official line colours on white casing; white station discs, interchanges with black ring |
 | | Airports (24) and helipads (22) | OurAirports (public domain) | icon per class: international, domestic, under construction, air base, airstrip, helipad |

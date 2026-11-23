@@ -47,11 +47,10 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Royal Commission data and municipalities (quick)
+      - name: Royal Commission transport data (quick)
         if: steps.need.outputs.run == 'true'
         run: |
           python scripts/rcrc_transport.py --download || echo "RCRC refresh skipped"
-          python scripts/municipalities.py || echo "municipalities skipped"
           git add web/data data_src
           git diff --cached --quiet || git commit -m "RCRC data and municipalities $(date +%F)"
           git pull --rebase -X theirs origin main && git push

@@ -1,0 +1,189 @@
+district_id,name_en,name_ar,mun
+10100003001,Al Amal,العمل,الملز|Al Malaz
+10100003002,Al Namudhajiyah,النموذجية,الشميسي|Al Shumaisi
+10100003003,Al Jarradiyah,الجرادية,الشميسي|Al Shumaisi
+10100003004,Al Sinaiyah,الصناعية,الملز|Al Malaz
+10100003005,Manfuha Al Jadidah,منفوحة الجديدة,البطحاء|Al Batha
+10100003006,Al Fakhiriyah,الفاخرية,الشميسي|Al Shumaisi
+10100003007,Al Dirah,الديرة,البطحاء|Al Batha
+10100003008,East Umm Al Hamam,ام الحمام الشرقي,المعذر|Al Maather
+10100003009,Al Sharafiyah,الشرفية,الشميسي|Al Shumaisi
+10100003010,Al Hada,الهدا,الشميسي|Al Shumaisi
+10100003011,North Mathar,المعذر الشمالي,المعذر|Al Maather
+10100003012,West Umm Al Hamam,ام الحمام الغربي,المعذر|Al Maather
+10100003013,Ar Rahmaniyah,الرحمانية,المعذر|Al Maather
+10100003014,Laban,لبن,العريجاء|Al Urayja
+10100003015,Ar Rafiah,الرفيعة,الشميسي|Al Shumaisi
+10100003016,Al Shohda,الشهداء,الروضة|Al Rawdah
+10100003017,King Fahd,الملك فهد,العليا|Al Olaya
+10100003018,Al Suwaidi,السويدي,العريجاء|Al Urayja
+10100003019,Al Hazm,الحزم,نمار|Namar
+10100003020,Utayqah,عتيقة,البطحاء|Al Batha
+10100003021,Al Murabba,المربع,الملز|Al Malaz
+10100003022,Al Falah,الفلاح,الشمال|Al Shamal
+10100003023,Al Nada,الندى,الشمال|Al Shamal
+10100003024,Al Mursalat,المرسلات,العليا|Al Olaya
+10100003025,Al Nuzha,النزهة,العليا|Al Olaya
+10100003026,Al Woroud,الورود,العليا|Al Olaya
+10100003027,King Faisal,الملك فيصل,الروضة|Al Rawdah
+10100003028,2nd Industrial City,المدينة الصناعية الثانية,السلي|Al Sulay
+10100003029,Al Aziziyah,العزيزية,العزيزية|Al Aziziya
+10100003030,Al Mansurah,المنصورة,العزيزية|Al Aziziya
+10100003031,Ghobairah,غبيرة,البطحاء|Al Batha
+10100003032,Al Farooq,الفاروق,الملز|Al Malaz
+10100003033,Al Faisaliyah,الفيصلية,البطحاء|Al Batha
+10100003034,Al Khalidiyah,الخالدية,البطحاء|Al Batha
+10100003035,Al Jazeerah,الجزيرة,السلي|Al Sulay
+10100003036,Al Saadah,السعادة,السلي|Al Sulay
+10100003037,Al Nasiriyah,الناصرية,الشميسي|Al Shumaisi
+10100003038,Al Manakh,المناخ,السلي|Al Sulay
+10100003039,Al Difaa,الدفاع,السلي|Al Sulay
+10100003040,Al Noor,النور,السلي|Al Sulay
+10100003041,King Abdullah,الملك عبدالله,العليا|Al Olaya
+10100003042,Al Wahah,الواحة,العليا|Al Olaya
+10100003043,Salahuddin,صلاح الدين,العليا|Al Olaya
+10100003044,King Abdulaziz,الملك عبدالعزيز,العليا|Al Olaya
+10100003045,Al Wizarat,الوزارات,الملز|Al Malaz
+10100003046,Skirinah,سكيرينة,البطحاء|Al Batha
+10100003047,Ar Rabwah,الربوة,الملز|Al Malaz
+10100003048,Jareer,جرير,الملز|Al Malaz
+10100003049,Al Mathar,المعذر,الشميسي|Al Shumaisi
+10100003050,As Salhiyah,الصالحية,البطحاء|Al Batha
+10100003051,Al Malaz,الملز,الملز|Al Malaz
+10100003052,Manfuhah,منفوحة,البطحاء|Al Batha
+10100003053,Olaishah,عليشة,الشميسي|Al Shumaisi
+10100003054,Al Nahdah,النهضة,الروضة|Al Rawdah
+10100003055,Al Khaleej,الخليج,الروضة|Al Rawdah
+10100003056,Al Dhubbat,الضباط,الملز|Al Malaz
+10100003057,West Suwaidi,السويدي الغربي,العريجاء|Al Urayja
+10100003058,Dirab,ديراب,نمار|Namar
+10100003059,Ohod,احد,الشفا|Al Shifa
+10100003060,Namar,نمار,نمار|Namar
+10100003061,Al Shifa,الشفا,الشفا|Al Shifa
+10100003062,Al Muhammadiyah,المحمدية,المعذر|Al Maather
+10100003063,Al Sulaimaniyah,السليمانية,العليا|Al Olaya
+10100003064,Al Marwah,المروة,الشفا|Al Shifa
+10100003065,Okaz,عكاظ,الشفا|Al Shifa
+10100003066,Shubra,شبرا,العريجاء|Al Urayja
+10100003067,Al Zahrah,الزهرة,العريجاء|Al Urayja
+10100003068,Siyah,صياح,الشميسي|Al Shumaisi
+10100003069,Sultanah,سلطانة,العريجاء|Al Urayja
+10100003070,Al Yamamah,اليمامة,البطحاء|Al Batha
+10100003071,Al Badiah,البديعة,الشميسي|Al Shumaisi
+10100003072,Al Masani,المصانع,الشفا|Al Shifa
+10100003073,Al Qadisiyah,القادسية,الروضة|Al Rawdah
+10100003074,Al Safa,الصفا,الملز|Al Malaz
+10100003075,Al Olaya,العليا,العليا|Al Olaya
+10100003076,Al Duraihemiyah,الدريهمية,العريجاء|Al Urayja
+10100003077,Al Iskan,الاسكان,السلي|Al Sulay
+10100003078,Al Salam,السلام,النسيم|Al Naseem
+10100003079,Al Manar,المنار,النسيم|Al Naseem
+10100003080,East Naseem,النسيم الشرقي,النسيم|Al Naseem
+10100003081,Al Quds,القدس,الروضة|Al Rawdah
+10100003082,Al Wadi,الوادي,الشمال|Al Shamal
+10100003083,Al Nafel,النفل,الشمال|Al Shamal
+10100003084,Al Maseef,المصيف,العليا|Al Olaya
+10100003085,Al Taawun,التعاون,العليا|Al Olaya
+10100003086,Al Ezdihar,الازدهار,العليا|Al Olaya
+10100003087,Al Andalus,الاندلس,الروضة|Al Rawdah
+10100003088,Al Rawdah,الروضة,الروضة|Al Rawdah
+10100003089,Al Rawabi,الروابي,النسيم|Al Naseem
+10100003090,Al Rayan,الريان,النسيم|Al Naseem
+10100003091,Dhahrat Al Badeah,ظهرة البديعة,العريجاء|Al Urayja
+10100003092,Al Nadheem,النظيم,الشرق|Al Sharq
+10100003093,Al Rimayah,الرماية,الشرق|Al Sharq
+10100003094,Al Bariyah,البرية,السلي|Al Sulay
+10100003095,Taybah,طيبة,العزيزية|Al Aziziya
+10100003096,Mansuriyah,المنصورية,الشفا|Al Shifa
+10100003097,Dahiyat Namar,ضاحية نمار,نمار|Namar
+10100003098,Al Misfat,المصفاة,العزيزية|Al Aziziya
+10100003099,Assafarat,السفارات,الحي الدبلوماسي|Diplomatic Quarter
+10100003100,Khashm Al An,خشم العان,السلي|Al Sulay
+10100003101,Qurtubah,قرطبة,الروضة|Al Rawdah
+10100003102,Tuwaiq,طويق,العريجاء|Al Urayja
+10100003103,Al Awaly,العوالي,نمار|Namar
+10100003104,Ar Rabie,الربيع,الشمال|Al Shamal
+10100003105,Al Mughrazat,المغرزات,العليا|Al Olaya
+10100003106,Al Sulay,السلي,السلي|Al Sulay
+10100003107,Al Aqeeq,العقيق,الشمال|Al Shamal
+10100003108,Al Nakheel,النخيل,المعذر|Al Maather
+10100003109,Al Ghadeer,الغدير,الشمال|Al Shamal
+10100003110,Al Muruj,المروج,العليا|Al Olaya
+10100003111,Al Oud,العود,البطحاء|Al Batha
+10100003112,Thulaim,ثليم,الملز|Al Malaz
+10100003113,Al Shumaisi,الشميسي,الشميسي|Al Shumaisi
+10100003114,Al Wisham,الوشام,الشميسي|Al Shumaisi
+10100003115,Salam Park,منتزه سلام,البطحاء|Al Batha
+10100003116,Al Dubiyah,الدوبية,البطحاء|Al Batha
+10100003117,Meakal,معكال,البطحاء|Al Batha
+10100003118,Jabrah,جبرة,البطحاء|Al Batha
+10100003119,Al Qura,القرى,البطحاء|Al Batha
+10100003120,Al Marqab,المرقب,البطحاء|Al Batha
+10100003121,Al Futah,الفوطة,الملز|Al Malaz
+10100003122,Umm Saleem,ام سليم,الشميسي|Al Shumaisi
+10100003123,Al Sahafah,الصحافة,الشمال|Al Shamal
+10100003125,Al Raed,الرائد,المعذر|Al Maather
+10100003126,West Oraija,العريجاء الغربي,العريجاء|Al Urayja
+10100003127,Al Uraija,العريجاء,العريجاء|Al Urayja
+10100003128,Middle Oraija,العريجاء الوسطى,العريجاء|Al Urayja
+10100003129,Al Hamra,الحمراء,الروضة|Al Rawdah
+10100003130,Al Dar Al Baida,الدار البيضاء,العزيزية|Al Aziziya
+10100003131,Al Butaiha,البطيحا,البطحاء|Al Batha
+10100003132,Al Zahra,الزهراء,الملز|Al Malaz
+10100003133,Al Fayha,الفيحاء,السلي|Al Sulay
+10100003134,Al Mutamarat,المؤتمرات,الشميسي|Al Shumaisi
+10100003135,Al Wusayta,الوسيطاء,البطحاء|Al Batha
+10100003136,Al Janadriyah,الجنادرية,الشرق|Al Sharq
+10100003137,Ishbiliyah,اشبيلية,الروضة|Al Rawdah
+10100003138,Al Maizalah,المعيزلة,الروضة|Al Rawdah
+10100003139,Al Yarmuk,اليرموك,الروضة|Al Rawdah
+10100003140,Al Munisiyah,المونسية,الروضة|Al Rawdah
+10100003141,Al Khuzama,الخزامى,عرقة|Irqah
+10100003142,Irqah,عرقة,عرقة|Irqah
+10100003143,Dhahrat Laban,ظهرة لبن,العريجاء|Al Urayja
+10100003144,Hiteen,حطين,الشمال|Al Shamal
+10100003145,Al Malqa,الملقا,الشمال|Al Shamal
+10100003146,Al Qairawan,القيروان,الشمال|Al Shamal
+10100003147,Al Yasmeen,الياسمين,الشمال|Al Shamal
+10100003148,Al Arid,العارض,الشمال|Al Shamal
+10100003150,Al Narjis,النرجس,الشمال|Al Shamal
+10100003151,Imam Muhammed Bin Saud Islamic University,جامعة الامام محمد بن سعود الاسلامية,الشمال|Al Shamal
+10100003152,Banban,بنبان,الشمال|Al Shamal
+10100003153,Al Rimal,الرمال,الروضة|Al Rawdah
+10100003155,Ghirnatah,غرناطة,الروضة|Al Rawdah
+10100003156,Al Dahou,الدحو,البطحاء|Al Batha
+10100003157,Al Ammajiyah,العماجية,العزيزية|Al Aziziya
+10100003158,Hyt,هيت,السلي|Al Sulay
+10100003159,Al Haer,الحائر,الحائر|Al Hayer
+10100003161,Umm Al Shaal,ام الشعال,الحائر|Al Hayer
+10100003162,Al Ghannamiyah,الغنامية,الحائر|Al Hayer
+10100003163,Oraid,عريض,الشفا|Al Shifa
+10100003164,Badr,بدر,الشفا|Al Shifa
+10100003165,Al Mahdiyah,المهدية,عرقة|Irqah
+10100003166,King Saud University,جامعة الملك سعود,المعذر|Al Maather
+10100003167,West Naseem,النسيم الغربي,النسيم|Al Naseem
+10100003168,Al Mishael,المشاعل,السلي|Al Sulay
+10100003169,Al Nadwah,الندوة,الشرق|Al Sharq
+10100003171,Al Rabiyah,الرابية,الشرق|Al Sharq
+10100003172,Wady Laban,وادي لبن,العريجاء|Al Urayja
+10100003174,Al Sidrah,السدرة,الحائر|Al Hayer
+10100003175,Al Tadamun,التضامن,الشرق|Al Sharq
+10100003176,King Abdullah City For Energy,مدينة الملك عبدالله للطاقة,العريجاء|Al Urayja
+10100003177,Al Basatin,البساتين,الشرق|Al Sharq
+10100003178,Al Rehab,الرحاب,الشرق|Al Sharq
+10100003179,Al Majd,المجد,الشرق|Al Sharq
+10100003180,Al Danah,الدانة,الشرق|Al Sharq
+10100003182,Al Risalah,الرسالة,الشرق|Al Sharq
+10100003183,Al Khair,الخير,الشمال|Al Shamal
+10100003184,Al Fursan,الفرسان,الشرق|Al Sharq
+10100003185,Al Sholah,الشعلة,الشرق|Al Sharq
+10100003186,Al Rayah,الراية,الشرق|Al Sharq
+10100003187,Al Zahour,الزهور,الشرق|Al Sharq
+10100003188,Al Zaher,الزاهر,الشرق|Al Sharq
+10100003189,Al Marjan,المرجان,الشرق|Al Sharq
+10100003190,Al Bayan,البيان,الشرق|Al Sharq
+10100003191,Al Ula,العلا,الشرق|Al Sharq
+10100003192,Al Mashriq,المشرق,الشرق|Al Sharq
+10100003193,Al Nakhbah,النخبة,الشرق|Al Sharq
+10100003194,Al Sahab,السحاب,الشرق|Al Sharq
+10100003195,Al Wasam,الوسام,الشرق|Al Sharq
