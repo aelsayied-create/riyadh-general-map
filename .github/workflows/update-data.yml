@@ -45,6 +45,7 @@ jobs:
           pip install geopandas pyogrio shapely
           npm install -g osmtogeojson
           python scripts/rcrc_transport.py --download
+          python scripts/municipalities.py || echo "municipalities skipped"
           python scripts/fetch_osm.py
 
       - name: Commit the new data

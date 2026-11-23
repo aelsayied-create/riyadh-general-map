@@ -138,6 +138,19 @@ async function start() {
 
   const govL = L.geoJSON(GV, { pane: "lines", style: { ...SYM.gov, fill: true, fillOpacity: 0 },
     onEachFeature: (f, l) => l.bindTooltip(`<div dir="rtl"><b>محافظة ${esc(f.properties.name_ar)}</b><br><small>${(+f.properties.area_km2).toLocaleString("en-US")} كم²</small></div>`, { sticky: true }) });
+  // sub-municipalities (البلديات) — built on GitHub by scripts/municipalities.py from RCRC open data
+  let MU = null;
+  const munL = L.layerGroup(), munLbl = L.layerGroup();
+  const MUN_STYLE = { color: "#5d4037", weight: 2, dashArray: "10 4 2 4", fill: true, fillOpacity: 0 };
+  (window.EMBED ? Promise.resolve(window.EMBED["municipalities.geojson"]) : fetch("data/municipalities.geojson").then(r => r.ok ? r.json() : null)).catch(() => null).then(fc => {
+    if (!fc || !fc.features || !fc.features.length) return;
+    MU = fc;
+    L.geoJSON(fc, { pane: "lines", style: MUN_STYLE,
+      onEachFeature: (f, l) => l.bindTooltip(`<div dir="rtl"><b>بلدية ${esc(f.properties.name_ar || f.properties.name_en)}</b><br><small>${f.properties.districts || ""} حي · ${(+f.properties.area_km2 || 0).toLocaleString("en-US")} كم²</small></div>`, { sticky: true }) }).addTo(munL);
+    fc.features.forEach(f => { const c = centre(f); label(c.lat, c.lng, esc(f.properties.name_ar || f.properties.name_en), "mun").addTo(munLbl); });
+    const i = document.querySelector('#layers input[data-k="mun"]'); if (i) { i.disabled = false; i.closest("label").classList.remove("off"); i.closest("label").removeAttribute("title"); }
+    apply();
+  });
   const distL = L.geoJSON(DS, { pane: "lines", style: SYM.dist,
     onEachFeature: (f, l) => {
       l.bindTooltip(`<div dir="rtl"><b>حي ${esc(f.properties.name_ar)}</b><br><small>${esc(f.properties.city_ar)} · ${f.properties.area_km2} كم²</small></div>`, { sticky: true });
@@ -174,7 +187,6 @@ async function start() {
     construction:  { ar: "مطار قيد الإنشاء", bg: "#e08a00", size: 24 },
     airbase:       { ar: "قاعدة جوية", bg: "#5b6770", size: 22 },
     airstrip:      { ar: "مهبط طائرات", bg: "#8c959c", size: 18 },
-    heliport:      { ar: "مهبط مروحيات", bg: "#37474f", size: 18 },
   };
   const PLANE_PATH = "M17.8 13.6v-1.2l-4.7-2.9V6.3a1.1 1.1 0 0 0-2.2 0v3.2l-4.7 2.9v1.2l4.7-1.4v3.2l-1.2.9v.9l2.3-.6 2.3.6v-.9l-1.2-.9v-3.2z";
   const apIcon = c => { const k = AP_CLS[c], dash = c === "construction" ? ' stroke-dasharray="3 2"' : "";
@@ -184,8 +196,7 @@ async function start() {
   const apMk = f => { const p = f.properties, [x, y] = f.geometry.coordinates;
     return L.marker([y, x], { pane: "pts", icon: apIcon(p.class), zIndexOffset: p.class === "international" ? 500 : 0 })
       .bindTooltip(`<div dir="rtl"><b>${esc(p.name_ar || p.name_en)}</b>${p.iata_code ? ` (${esc(p.iata_code)})` : ""}<br><small>${AP_CLS[p.class].ar}${p.name_ar ? ` · <span lang="en">${esc(p.name_en)}</span>` : ""}</small></div>`); };
-  const apL = L.layerGroup(AP.features.filter(f => f.properties.class !== "heliport").map(apMk));
-  const heliL = L.layerGroup(AP.features.filter(f => f.properties.class === "heliport").map(apMk));
+  const apL = L.layerGroup(AP.features.filter(f => AP_CLS[f.properties.class]).map(apMk));
   const apLbl = L.layerGroup(AP.features.filter(f => ["international", "domestic", "construction", "airbase"].includes(f.properties.class))
     .map(f => label(f.geometry.coordinates[1], f.geometry.coordinates[0], esc(f.properties.name_ar || f.properties.name_en), "airport")));
 
@@ -312,7 +323,7 @@ async function start() {
   const LAYERS = [
     ["الحدود"],
     ["region", "منطقة الرياض", rgL, true, `<i style="border:2px solid #2b2a27;background:none;box-shadow:0 0 0 2px #fff inset"></i>`],
-    ["gov", "المحافظات", govL, false, `<i style="border:1.5px dashed #7a6a55;background:none"></i>`],
+    ["mun", "البلديات", munL, true, `<i style="border:2px dashed #5d4037;background:none"></i>`, 2],
     ["dist", "الأحياء", distL, false, `<i style="border:1px solid #8a8478;background:rgba(201,185,154,.25)"></i>`],
     ["النقل"],
     ["metro", "مترو الرياض", metroL, true, `<i class="ln metro"></i>`],
@@ -320,7 +331,6 @@ async function start() {
     ["hw", "الطرق الإقليمية (Natural Earth)", hwL, false, `<i class="ln" style="background:#e3262b;box-shadow:0 0 0 1px #7f0000"></i>`],
     ["rail", "السكك الحديدية", rwL, false, `<i class="ln" style="background:repeating-linear-gradient(90deg,#3b3b3b 0 5px,#fff 5px 10px);box-shadow:0 0 0 1px #3b3b3b"></i>`],
     ["air", "المطارات", apL, true, `<i class="ico" style="background:#0b3c5d"></i>`],
-    ["heli", "مهابط المروحيات", heliL, false, `<i class="ico sq" style="background:#37474f">H</i>`],
     ["busRoutes", "خطوط الحافلات", brL, false, `<i class="ln" style="background:linear-gradient(90deg,#0b3c8c 0 25%,#1976d2 25% 50%,#00897b 50% 75%,#64b5f6 75%)"></i>`],
     ["bus", "مواقف الحافلات", busL, false, `<i class="dot" style="background:#1e88e5;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px #1e88e5"></i>`],
     ["pr", "مواقف «اركن وارتحل»", prL, false, `<i style="background:rgba(0,176,240,.35);border:1.5px solid #0077b6;color:#0077b6;font-style:normal;font-size:9px;font-weight:700;line-height:9px;text-align:center">P</i>`],
@@ -343,12 +353,12 @@ async function start() {
   ];
   const on = {};
   $("layers").innerHTML = LAYERS.map(r => r.length === 1 ? `<h4>${r[0]}</h4>` :
-    `<label${r[5] ? ' class="off" title="تظهر بعد تحميل بيانات OpenStreetMap على GitHub"' : ""}><input type="checkbox" data-k="${r[0]}" ${r[3] ? "checked" : ""}${r[5] ? " data-osm disabled" : ""}>${r[4]}${r[1]}</label>`).join("") + `<p class="osmnote" id="osmNote">تظهر طبقات OpenStreetMap بعد نشر الخريطة على GitHub</p>`;
+    `<label${r[5] ? ` class="off" title="${r[5] === 2 ? "تظهر بعد تجهيز البلديات على GitHub" : "تظهر بعد تحميل بيانات OpenStreetMap على GitHub"}"` : ""}><input type="checkbox" data-k="${r[0]}" ${r[3] ? "checked" : ""}${r[5] === 1 ? " data-osm" : ""}${r[5] ? " disabled" : ""}>${r[4]}${r[1]}</label>`).join("") + `<p class="osmnote" id="osmNote">تظهر طبقات OpenStreetMap بعد نشر الخريطة على GitHub</p>`;
   LAYERS.filter(r => r.length > 1).forEach(r => { on[r[0]] = r[3]; });
   const set = (lyr, show) => show ? map.addLayer(lyr) : map.removeLayer(lyr);
   function zoomRules() {
     const z = map.getZoom(), lab = on.labels;
-    set(govLbl, lab && on.gov && z < 11);
+    set(munLbl, lab && on.mun && z >= 10 && z < 13.5);
     set(distLbl, lab && on.dist && z >= 12.5);
     set(stL, on.stations && z >= 10); set(stLbl, on.stations && z >= 13);
     Object.entries(busByType).forEach(([k, g]) => set(g, on.bus && z >= SHELTER_SYM[k].z));
@@ -414,6 +424,7 @@ async function start() {
     const dark = b === "imagery";
     rgL.eachLayer(g => g.setStyle(g === rgL.getLayers()[1] ? { color: dark ? "#fff" : "#2b2a27" } : { color: dark ? "#000" : "#fff", opacity: dark ? 0.5 : 0.85 }));
     govL.setStyle({ color: dark ? "#fff" : "#7a6a55" });
+    munL.eachLayer(g => g.setStyle({ color: dark ? "#ffffff" : "#5d4037" }));
     SYM.dist.color = dark ? "#ffffff" : "#857c6d"; SYM.dist.fillOpacity = dark ? 0 : 0.06; distL.setStyle(SYM.dist);
     $("map").classList.toggle("on-imagery", dark);
   }
@@ -447,7 +458,7 @@ async function start() {
     }
     function where(it) {
       const c = it.type === "point" ? it.ll[0] : L.latLngBounds(it.ll).getCenter();
-      const g = hit(S, c.lat, c.lng); return g ? g.properties.name_ar : "";
+      const m = MU ? hit(MU, c.lat, c.lng) : null; if (m) return "بلدية " + (m.properties.name_ar || m.properties.name_en); const g = hit(S, c.lat, c.lng); return g ? "محافظة " + g.properties.name_ar : "";
     }
     function makeLayer(it) {
       if (it.type === "point") return L.circleMarker(it.ll[0], { pane: "lbl", radius: 7, color: "#fff", weight: 2.5, fillColor: COL, fillOpacity: 1 });
@@ -530,9 +541,9 @@ async function start() {
         const gov = where(it);
         return `    <Placemark>
       <name>${xml(it.name)}</name>
-      <description>${xml(measure(it) + (gov ? ` · محافظة ${gov}` : ""))}</description>
+      <description>${xml(measure(it) + (gov ? ` · ${gov}` : ""))}</description>
       <styleUrl>#${it.type}</styleUrl>
-      <ExtendedData><Data name="type"><value>${it.type}</value></Data><Data name="governorate"><value>${xml(gov)}</value></Data></ExtendedData>
+      <ExtendedData><Data name="type"><value>${it.type}</value></Data><Data name="municipality"><value>${xml(gov)}</value></Data></ExtendedData>
       ${g}
     </Placemark>`;
       }).join("\n");
@@ -627,6 +638,7 @@ ${pm}
   function show(lat, lon, note, source) {
     const inside = !!hit(RG, lat, lon);
     const g = inside ? hit(GV, lat, lon) : null, d = inside ? hit(DS, lat, lon) : null, nb = inside ? null : hit(NB, lat, lon);
+    const mu = inside && MU ? hit(MU, lat, lon) : null;
     let nearT = null, nearS = null;
     TW.features.forEach(f => { const [x, y] = f.geometry.coordinates, k = km(lat, lon, y, x); if (!nearT || k < nearT.k) nearT = { p: f.properties, k }; });
     MS.features.forEach(f => { const [x, y] = f.geometry.coordinates, k = km(lat, lon, y, x); if (!nearS || k < nearS.k) nearS = { p: f.properties, k }; });
@@ -635,8 +647,8 @@ ${pm}
     L.circleMarker([lat, lon], { pane: "lbl", radius: 9, color: "#fff", weight: 3, fillColor: "#b5452e", fillOpacity: 1 }).addTo(pin)
       .bindTooltip(dec, { direction: "top", offset: [0, -8] });
     if (source === "search") map.flyTo([lat, lon], Math.max(map.getZoom(), 14), { duration: 0.8 });
-    const dp = d?.properties, gp = g?.properties;
-    const title = dp ? `حي ${esc(dp.name_ar)}` : gp ? `محافظة ${esc(gp.name_ar)}` : nb ? esc(nb.properties.name_ar || nb.properties.name) : "خارج نطاق الخريطة";
+    const dp = d?.properties, gp = g?.properties, mp = mu?.properties;
+    const title = dp ? `حي ${esc(dp.name_ar)}` : mp ? `بلدية ${esc(mp.name_ar || mp.name_en)}` : gp ? `محافظة ${esc(gp.name_ar)}` : nb ? esc(nb.properties.name_ar || nb.properties.name) : "خارج نطاق الخريطة";
     $("result").innerHTML = `
       <button class="back" id="back" type="button">→ الصيغ والأمثلة</button>
       <h2>${title}</h2>
@@ -645,7 +657,8 @@ ${pm}
       <div class="facts">
         ${dp ? `<div class="fact"><span>الحي</span><b>${esc(dp.name_ar)}</b><small lang="en">${esc(dp.name_en)}</small></div>
                 <div class="fact"><span>المدينة</span><b>${esc(dp.city_ar)}</b><small lang="en">${esc(dp.city_en)}</small></div>` : ""}
-        ${gp ? `<div class="fact"><span>المحافظة</span><b>${esc(gp.name_ar)}</b><small lang="en">${esc(gp.name_en)}</small></div>` : ""}
+        ${mp ? `<div class="fact"><span>البلدية</span><b>${esc(mp.name_ar || mp.name_en)}</b>${mp.name_ar && mp.name_en ? `<small lang="en">${esc(mp.name_en)}</small>` : ""}</div>`
+             : gp ? `<div class="fact"><span>المحافظة</span><b>${esc(gp.name_ar)}</b><small lang="en">${esc(gp.name_en)}</small></div>` : ""}
         <div class="fact"><span>أقرب مدينة أو بلدة</span><b>${esc(nearT.p.name_ar)}</b><small>على بُعد ${fmtKm(nearT.k)}</small></div>
         ${nearS && nearS.k < 15 ? `<div class="fact wide"><span>أقرب محطة مترو</span><b>${esc(nearS.p.name_ar)}</b><small>على بُعد ${fmtKm(nearS.k)} · ${lineChips(nearS.p.lines)}</small></div>` : ""}
         <div class="fact wide"><span>درجات عشرية</span><b dir="ltr">${dec}</b></div>
