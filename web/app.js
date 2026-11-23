@@ -102,8 +102,8 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "
 // ---------------- map
 async function start() {
   const get = n => fetch(`data/${n}`).then(r => r.json());
-  const [RG, GV, DS, NB, ML, MS, HW, RW, AP, TW] = await Promise.all(
-    ["region", "governorates", "districts", "neighbours", "metro_lines", "metro_stations", "highways", "railways", "airports", "towns"]
+  const [RG, GV, DS, NB, ML, MS, HW, RW, AP, TW, BS, PR, DRT] = await Promise.all(
+    ["region", "governorates", "districts", "neighbours", "metro_lines", "metro_stations", "highways", "railways", "airports", "towns", "bus_stops", "park_ride", "on_demand"]
       .map(n => get(n + ".geojson")));
   const S = GV; // used by the drawing tools to name the governorate
 
@@ -125,8 +125,8 @@ async function start() {
     gov:     { color: "#7a6a55", weight: 1.3, dashArray: "8 4 2 4" },
     dist:    { color: "#857c6d", weight: 0.9, opacity: 0.9, fillColor: "#c9b99a", fillOpacity: 0.07 },
     distHi:  { color: "#b5452e", weight: 2, fillColor: "#b5452e", fillOpacity: 0.12 },
-    hwMajor: { casing: { color: "#7a3b12", weight: 5.5 }, line: { color: "#f59d4c", weight: 3.5 } },
-    hwMinor: { casing: { color: "#8a6a2a", weight: 3.6 }, line: { color: "#ffd27a", weight: 2 } },
+    hwMajor: { casing: { color: "#7f0000", weight: 6 }, line: { color: "#e3262b", weight: 4 } },
+    hwMinor: { casing: { color: "#a50f15", weight: 4 }, line: { color: "#f4796b", weight: 2.4 } },
     rail:    { base: { color: "#3b3b3b", weight: 4 }, dash: { color: "#ffffff", weight: 2, dashArray: "8 8" } },
   };
 
@@ -167,10 +167,38 @@ async function start() {
   }));
   const stLbl = L.layerGroup(MS.features.map(f => label(f.geometry.coordinates[1], f.geometry.coordinates[0], esc(f.properties.name_ar), "station")));
 
-  const PLANE = `<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#1f5f7a" stroke="#fff" stroke-width="2"/><path d="M17.8 13.6v-1.2l-4.7-2.9V6.3a1.1 1.1 0 0 0-2.2 0v3.2l-4.7 2.9v1.2l4.7-1.4v3.2l-1.2.9v.9l2.3-.6 2.3.6v-.9l-1.2-.9v-3.2z" fill="#fff"/></svg>`;
-  const apL = L.layerGroup(AP.features.map(f => L.marker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { pane: "pts",
-    icon: L.divIcon({ className: "", html: PLANE, iconSize: [20, 20], iconAnchor: [10, 10] }) })
-    .bindTooltip(`<div dir="rtl"><b>${esc(f.properties.name_ar || f.properties.name)}</b>${f.properties.iata_code ? ` (${esc(f.properties.iata_code)})` : ""}</div>`)));
+  // airports: one icon per class (OurAirports)
+  const AP_CLS = {
+    international: { ar: "مطار دولي", bg: "#0b3c5d", size: 28 },
+    domestic:      { ar: "مطار محلي", bg: "#1f78b4", size: 24 },
+    construction:  { ar: "مطار قيد الإنشاء", bg: "#e08a00", size: 24 },
+    airbase:       { ar: "قاعدة جوية", bg: "#5b6770", size: 22 },
+    airstrip:      { ar: "مهبط طائرات", bg: "#8c959c", size: 18 },
+    heliport:      { ar: "مهبط مروحيات", bg: "#37474f", size: 18 },
+  };
+  const PLANE_PATH = "M17.8 13.6v-1.2l-4.7-2.9V6.3a1.1 1.1 0 0 0-2.2 0v3.2l-4.7 2.9v1.2l4.7-1.4v3.2l-1.2.9v.9l2.3-.6 2.3.6v-.9l-1.2-.9v-3.2z";
+  const apIcon = c => { const k = AP_CLS[c], dash = c === "construction" ? ' stroke-dasharray="3 2"' : "";
+    const glyph = c === "heliport" ? `<text x="12" y="16.2" text-anchor="middle" font-size="11" font-weight="700" fill="#fff" font-family="Arial">H</text>` : `<path d="${PLANE_PATH}" fill="#fff"/>`;
+    const shape = c === "airstrip" || c === "heliport" ? `<rect x="2" y="2" width="20" height="20" rx="5" fill="${k.bg}" stroke="#fff" stroke-width="2"${dash}/>` : `<circle cx="12" cy="12" r="10.5" fill="${k.bg}" stroke="#fff" stroke-width="2"${dash}/>`;
+    return L.divIcon({ className: "apico", html: `<svg width="${k.size}" height="${k.size}" viewBox="0 0 24 24" aria-hidden="true">${shape}${glyph}</svg>`, iconSize: [k.size, k.size], iconAnchor: [k.size / 2, k.size / 2] }); };
+  const apMk = f => { const p = f.properties, [x, y] = f.geometry.coordinates;
+    return L.marker([y, x], { pane: "pts", icon: apIcon(p.class), zIndexOffset: p.class === "international" ? 500 : 0 })
+      .bindTooltip(`<div dir="rtl"><b>${esc(p.name_ar || p.name_en)}</b>${p.iata_code ? ` (${esc(p.iata_code)})` : ""}<br><small>${AP_CLS[p.class].ar}${p.name_ar ? ` · <span lang="en">${esc(p.name_en)}</span>` : ""}</small></div>`); };
+  const apL = L.layerGroup(AP.features.filter(f => f.properties.class !== "heliport").map(apMk));
+  const heliL = L.layerGroup(AP.features.filter(f => f.properties.class === "heliport").map(apMk));
+  const apLbl = L.layerGroup(AP.features.filter(f => ["international", "domestic", "construction", "airbase"].includes(f.properties.class))
+    .map(f => label(f.geometry.coordinates[1], f.geometry.coordinates[0], esc(f.properties.name_ar || f.properties.name_en), "airport")));
+
+  // bus: stops on a canvas (2,400 points), park-and-ride lots, on-demand zones
+  const busCanvas = L.canvas({ pane: "pts", padding: 0.3 });
+  const busL = L.layerGroup(BS.features.map(f => { const p = f.properties, [x, y] = f.geometry.coordinates;
+    return L.circleMarker([y, x], { renderer: busCanvas, radius: p.hub ? 5.5 : 3.6, color: "#ffffff", weight: 1.4, fillColor: p.hub ? "#003f7d" : "#0a77c4", fillOpacity: 1 })
+      .bindTooltip(`<div dir="rtl"><b>موقف حافلات ${esc(p.name_ar || p.name_en)}</b>${p.hub ? "<br><small>محطة رئيسية</small>" : ""}</div>`); }));
+  const prL = L.geoJSON(PR, { pane: "lines", style: { color: "#0077b6", weight: 1.5, fillColor: "#00b0f0", fillOpacity: 0.35 },
+    onEachFeature: (f, l) => l.bindTooltip(`<div dir="rtl"><b>مواقف «اركن وارتحل» ${esc(f.properties.name)}</b></div>`, { sticky: true }) });
+  const prLbl = L.layerGroup(PR.features.map(f => { const c = centre(f); return label(c.lat, c.lng, "P", "prk"); }));
+  const drtL = L.geoJSON(DRT, { pane: "base", style: { color: "#2e7d32", weight: 1.6, dashArray: "6 4", fillColor: "#7ad260", fillOpacity: 0.12 },
+    onEachFeature: (f, l) => l.bindTooltip(`<div dir="rtl"><b>منطقة النقل عند الطلب</b><br><small lang="en">${esc(f.properties.name)}</small></div>`, { sticky: true }) });
 
   const TW_SYM = { 1: { radius: 7, weight: 3, color: "#1b1b1b", fillColor: "#ffffff" }, 2: { radius: 4.5, weight: 1.5, color: "#ffffff", fillColor: "#2b2a27" }, 3: { radius: 2.6, weight: 1, color: "#ffffff", fillColor: "#5b5750" } };
   const twMk = f => L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { pane: "pts", fillOpacity: 1, ...TW_SYM[f.properties.rank] })
@@ -183,6 +211,83 @@ async function start() {
   const govLbl = L.layerGroup(GV.features.map(f => { const c = centre(f); return label(c.lat, c.lng, esc(f.properties.name_ar), "gov"); }));
   const distLbl = L.layerGroup(DS.features.map(f => { const c = centre(f); return label(c.lat, c.lng, esc(f.properties.name_ar), "dist"); }));
 
+  // ---------------- OpenStreetMap layers (prepared on GitHub by scripts/fetch_osm.py)
+  const OSM_ROAD = {
+    motorway:  { c: "#7f0000", w: 6.5, i: "#e3262b", iw: 4.2 },
+    trunk:     { c: "#7f0000", w: 5.5, i: "#e3262b", iw: 3.6 },
+    primary:   { c: "#5f5f5f", w: 6.5, i: "#ffffff", iw: 4.4 },
+    secondary: { c: "#8a8a8a", w: 5,   i: "#ffffff", iw: 3.2 },
+  };
+  const busRoutesL = L.layerGroup(), osmRoadsL = L.layerGroup(), osmStreetsL = L.layerGroup(), parksL = L.layerGroup(), parkLbl = L.layerGroup();
+  const streetCanvas = L.canvas({ pane: "lines", padding: 0.2 });
+  const POI_SYM = {
+    hotels:       { ar: "فندق",        bg: "#6a1b9a", z: 12,
+      g: '<path d="M6 16V9h1.6v4h4.4v-2.6a1.4 1.4 0 0 1 1.4-1.4h3.2a1.4 1.4 0 0 1 1.4 1.4V16h-1.6v-1.4H7.6V16z" fill="#fff"/><circle cx="9.4" cy="11.3" r="1.3" fill="#fff"/>' },
+    apartments:   { ar: "شقق فندقية",  bg: "#c2185b", z: 13,
+      g: '<path d="M7.5 17V7.2h9V17h-3.3v-2.6h-2.4V17zM9.2 8.9v1.4h1.4V8.9zm4.2 0v1.4h1.4V8.9zm-4.2 2.9v1.4h1.4v-1.4zm4.2 0v1.4h1.4v-1.4z" fill="#fff"/>' },
+    hospitals:    { ar: "مستشفى",      bg: "#d62728", z: 12, g: '<path d="M10.4 6.5h3.2v3.9h3.9v3.2h-3.9v3.9h-3.2v-3.9H6.5v-3.2h3.9z" fill="#fff"/>' },
+    universities: { ar: "جامعة/كلية",  bg: "#3949ab", z: 12, g: '<path d="M12 6.5 4.8 10 12 13.5 19.2 10zM7.8 12.2v3.1c1.1 1 2.6 1.6 4.2 1.6s3.1-.6 4.2-1.6v-3.1L12 14.3z" fill="#fff"/>' },
+    malls:        { ar: "مركز تسوق",   bg: "#ef6c00", z: 12, g: '<path d="M7.5 9.5h9l-.7 8H8.2zM9.6 9.5V8.6a2.4 2.4 0 0 1 4.8 0v.9" fill="none" stroke="#fff" stroke-width="1.6"/>' },
+    attractions:  { ar: "معلم سياحي",  bg: "#6d4c41", z: 11, g: '<path d="m12 6.2 1.7 3.6 3.9.4-2.9 2.6.8 3.9L12 14.8l-3.5 1.9.8-3.9-2.9-2.6 3.9-.4z" fill="#fff"/>' },
+    mosques:      { ar: "مسجد",        bg: "#138d75", z: 15, dot: true },
+    schools:      { ar: "مدرسة",       bg: "#c49a00", z: 15, dot: true },
+  };
+  const poiL = Object.fromEntries(Object.keys(POI_SYM).map(k => [k, L.layerGroup()]));
+  const poiCanvas = L.canvas({ pane: "pts", padding: 0.3 });
+  const poiIcon = k => L.divIcon({ className: "apico", iconSize: [22, 22], iconAnchor: [11, 11],
+    html: `<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="${POI_SYM[k].bg}" stroke="#fff" stroke-width="2"/>${POI_SYM[k].g}</svg>` });
+  const poiTip = (k, p) => `<div dir="rtl"><b>${esc(p.name_ar || p.name_en || POI_SYM[k].ar)}</b><br><small>${POI_SYM[k].ar}${p.stars ? ` · ${"★".repeat(Math.min(+p.stars || 0, 5))}` : ""}${p.name_en && p.name_ar ? ` · <span lang="en">${esc(p.name_en)}</span>` : ""}</small></div>`;
+  let OSM = null;
+  const loadedTiles = new Set();
+  function loadStreetTiles() {
+    if (!OSM || !OSM.street_tiles || !on.streets || map.getZoom() < 14) return;
+    const b = map.getBounds(), [s0, w0] = OSM.bbox, c = OSM.cell;
+    OSM.street_tiles.forEach(([cx, cy]) => {
+      const key = cx + "_" + cy; if (loadedTiles.has(key)) return;
+      const tb = L.latLngBounds([s0 + cy * c, w0 + cx * c], [s0 + (cy + 1) * c, w0 + (cx + 1) * c]);
+      if (!b.pad(0.2).intersects(tb)) return;
+      loadedTiles.add(key);
+      fetch(`data/osm/streets/${key}.geojson`).then(r => r.json()).then(fc => {
+        L.geoJSON(fc, { renderer: streetCanvas, style: f => ({ color: "#9a9a9a", weight: f.properties.class === "tertiary" ? 2.2 : 1.4, opacity: 0.95 }),
+          onEachFeature: (f, l) => { if (f.properties.name_ar || f.properties.name_en) l.bindTooltip(`<div dir="rtl">${esc(f.properties.name_ar || f.properties.name_en)}</div>`, { sticky: true }); } }).addTo(osmStreetsL);
+      }).catch(() => loadedTiles.delete(key));
+    });
+  }
+  fetch("data/osm/manifest.json").then(r => r.ok ? r.json() : null).then(async m => {
+    if (!m) return;
+    OSM = m;
+    const j = n => fetch(`data/osm/${n}`).then(r => r.ok ? r.json() : null).catch(() => null);
+    const [roads, parks, routes, ...pois] = await Promise.all([j("roads.geojson"), j("parks.geojson"), j("bus_routes.geojson"), ...Object.keys(POI_SYM).map(k => j(`poi_${k}.geojson`))]);
+    if (routes) {
+      const col = p => /^#?[0-9a-f]{6}$/i.test(p.colour || "") ? (p.colour[0] === "#" ? p.colour : "#" + p.colour) : "#0a77c4";
+      L.geoJSON(routes, { pane: "lines", interactive: false, style: { color: "#ffffff", weight: 5, opacity: 0.8 } }).addTo(busRoutesL);
+      L.geoJSON(routes, { pane: "lines", style: f => ({ color: col(f.properties), weight: 2.6, opacity: 0.9, dashArray: "1 0" }),
+        onEachFeature: (f, l) => { const p = f.properties;
+          l.bindTooltip(`<div dir="rtl"><b>خط الحافلات ${esc(p.ref || "")}</b><br><small>${esc(p.name_ar || p.name_en || [p.from, p.to].filter(Boolean).join(" ← "))}</small></div>`, { sticky: true }); } }).addTo(busRoutesL);
+    }
+    if (roads) {
+      const order = ["secondary", "primary", "trunk", "motorway"];
+      const sorted = { ...roads, features: roads.features.filter(f => OSM_ROAD[f.properties.class]).sort((a, b) => order.indexOf(a.properties.class) - order.indexOf(b.properties.class)) };
+      L.geoJSON(sorted, { pane: "lines", interactive: false, style: f => ({ color: OSM_ROAD[f.properties.class].c, weight: OSM_ROAD[f.properties.class].w, lineCap: "round" }) }).addTo(osmRoadsL);
+      L.geoJSON(sorted, { pane: "lines", style: f => ({ color: OSM_ROAD[f.properties.class].i, weight: OSM_ROAD[f.properties.class].iw, lineCap: "round" }),
+        onEachFeature: (f, l) => { const p = f.properties; if (p.name_ar || p.name_en || p.ref) l.bindTooltip(`<div dir="rtl"><b>${esc(p.name_ar || p.name_en || "")}</b>${p.ref ? ` <span lang="en">(${esc(p.ref)})</span>` : ""}</div>`, { sticky: true }); } }).addTo(osmRoadsL);
+    }
+    if (parks) {
+      L.geoJSON(parks, { pane: "base", style: { color: "#5a9e3c", weight: 1, fillColor: "#a5d98a", fillOpacity: 0.65 },
+        onEachFeature: (f, l) => l.bindTooltip(`<div dir="rtl"><b>${esc(f.properties.name_ar || f.properties.name_en || "مساحة خضراء")}</b></div>`, { sticky: true }) }).addTo(parksL);
+      parks.features.filter(f => f.properties.name_ar || f.properties.name_en).forEach(f => { const c = centre(f); label(c.lat, c.lng, esc(f.properties.name_ar || f.properties.name_en), "park").addTo(parkLbl); });
+    }
+    Object.keys(POI_SYM).forEach((k, i) => {
+      const fc = pois[i]; if (!fc) return;
+      fc.features.forEach(f => { const [x, y] = f.geometry.coordinates, sym = POI_SYM[k];
+        (sym.dot ? L.circleMarker([y, x], { renderer: poiCanvas, radius: 4, color: "#fff", weight: 1.2, fillColor: sym.bg, fillOpacity: 1 })
+                 : L.marker([y, x], { pane: "pts", icon: poiIcon(k) })).bindTooltip(poiTip(k, f.properties)).addTo(poiL[k]); });
+    });
+    document.querySelectorAll("#layers input[data-osm]").forEach(i => { i.disabled = false; i.closest("label").classList.remove("off"); });
+    const note = $("osmNote"); if (note) note.textContent = `OpenStreetMap · ${OSM.generated}`;
+    apply();
+  }).catch(() => {});
+
   // ---------------- layer switcher
   const sw = (bg, extra = "") => `<i style="${bg}${extra}"></i>`;
   const LAYERS = [
@@ -193,16 +298,33 @@ async function start() {
     ["النقل"],
     ["metro", "مترو الرياض", metroL, true, `<i class="ln metro"></i>`],
     ["stations", "محطات المترو", stL, true, `<i class="dot" style="background:#fff;box-shadow:0 0 0 2px #00ade5"></i>`],
-    ["hw", "الطرق السريعة", hwL, false, `<i class="ln" style="background:#f59d4c;box-shadow:0 0 0 1px #7a3b12"></i>`],
+    ["hw", "الطرق الإقليمية (Natural Earth)", hwL, false, `<i class="ln" style="background:#e3262b;box-shadow:0 0 0 1px #7f0000"></i>`],
     ["rail", "السكك الحديدية", rwL, false, `<i class="ln" style="background:repeating-linear-gradient(90deg,#3b3b3b 0 5px,#fff 5px 10px);box-shadow:0 0 0 1px #3b3b3b"></i>`],
-    ["air", "المطارات", apL, false, `<i class="dot" style="background:#1f5f7a"></i>`],
+    ["air", "المطارات", apL, true, `<i class="ico" style="background:#0b3c5d"></i>`],
+    ["heli", "مهابط المروحيات", heliL, false, `<i class="ico sq" style="background:#37474f">H</i>`],
+    ["busRoutes", "خطوط الحافلات (OpenStreetMap)", busRoutesL, false, `<i class="ln" style="background:#0a77c4;box-shadow:0 0 0 1.5px #fff"></i>`, 1],
+    ["bus", "مواقف الحافلات", busL, false, `<i class="dot" style="background:#0a77c4;box-shadow:0 0 0 1.5px #fff,0 0 0 2.5px #0a77c4"></i>`],
+    ["pr", "مواقف «اركن وارتحل»", prL, false, `<i style="background:rgba(0,176,240,.35);border:1.5px solid #0077b6;color:#0077b6;font-style:normal;font-size:9px;font-weight:700;line-height:9px;text-align:center">P</i>`],
+    ["drt", "مناطق النقل عند الطلب", drtL, false, `<i style="background:rgba(122,210,96,.2);border:1.5px dashed #2e7d32"></i>`],
+    ["الشوارع والأماكن (OpenStreetMap)"],
+    ["osmRoads", "الطرق السريعة والرئيسية", osmRoadsL, true, `<i class="ln" style="background:#e3262b;box-shadow:0 0 0 1px #7f0000"></i>`, 1],
+    ["streets", "الشوارع الداخلية", osmStreetsL, true, `<i class="ln" style="background:#9a9a9a"></i>`, 1],
+    ["parks", "الحدائق والمساحات الخضراء", parksL, true, `<i style="background:#a5d98a;border:1px solid #5a9e3c"></i>`, 1],
+    ["hotels", "الفنادق", poiL.hotels, true, `<i class="ico" style="background:#6a1b9a"></i>`, 1],
+    ["apartments", "الشقق الفندقية", poiL.apartments, true, `<i class="ico" style="background:#c2185b"></i>`, 1],
+    ["hospitals", "المستشفيات", poiL.hospitals, false, `<i class="ico" style="background:#d62728">+</i>`, 1],
+    ["universities", "الجامعات والكليات", poiL.universities, false, `<i class="ico" style="background:#3949ab"></i>`, 1],
+    ["malls", "مراكز التسوق", poiL.malls, false, `<i class="ico" style="background:#ef6c00"></i>`, 1],
+    ["attractions", "المعالم السياحية والمتاحف", poiL.attractions, false, `<i class="ico" style="background:#6d4c41">★</i>`, 1],
+    ["mosques", "المساجد", poiL.mosques, false, `<i class="dot" style="background:#138d75"></i>`, 1],
+    ["schools", "المدارس", poiL.schools, false, `<i class="dot" style="background:#c49a00"></i>`, 1],
     ["الأماكن"],
     ["towns", "المدن والبلدات", twL, false, `<i class="dot" style="background:#2b2a27"></i>`],
     ["labels", "الأسماء", L.layerGroup(), false, `<i style="background:none;font-style:normal;font-size:11px;line-height:11px;font-weight:700">أ</i>`],
   ];
   const on = {};
   $("layers").innerHTML = LAYERS.map(r => r.length === 1 ? `<h4>${r[0]}</h4>` :
-    `<label><input type="checkbox" data-k="${r[0]}" ${r[3] ? "checked" : ""}>${r[4]}${r[1]}</label>`).join("");
+    `<label${r[5] ? ' class="off" title="تظهر بعد تحميل بيانات OpenStreetMap على GitHub"' : ""}><input type="checkbox" data-k="${r[0]}" ${r[3] ? "checked" : ""}${r[5] ? " data-osm disabled" : ""}>${r[4]}${r[1]}</label>`).join("") + `<p class="osmnote" id="osmNote">تظهر طبقات OpenStreetMap بعد نشر الخريطة على GitHub</p>`;
   LAYERS.filter(r => r.length > 1).forEach(r => { on[r[0]] = r[3]; });
   const set = (lyr, show) => show ? map.addLayer(lyr) : map.removeLayer(lyr);
   function zoomRules() {
@@ -210,15 +332,19 @@ async function start() {
     set(govLbl, lab && on.gov && z < 11);
     set(distLbl, lab && on.dist && z >= 12.5);
     set(stL, on.stations && z >= 10); set(stLbl, on.stations && z >= 13);
+    set(busL, on.bus && z >= 12.5);
+    set(osmStreetsL, on.streets && z >= 14); loadStreetTiles();
+    set(parksL, on.parks && z >= 11); set(parkLbl, lab && on.parks && z >= 15);
+    Object.entries(POI_SYM).forEach(([k, v]) => set(poiL[k], on[k] && z >= v.z)); set(prLbl, on.pr && z >= 13); set(apLbl, lab && on.air && z >= 8);
     set(twLbl1, lab && on.towns); set(twLbl2, lab && on.towns && z >= 8); set(twLbl3, lab && on.towns && z >= 11);
     set(twSmall, on.towns && z >= 9);
   }
   function apply() {
-    LAYERS.filter(r => r.length > 1 && !["labels", "stations"].includes(r[0])).forEach(r => set(r[2], on[r[0]]));
+    LAYERS.filter(r => r.length > 1 && !["labels", "stations", "bus", "streets", "parks", ...Object.keys(POI_SYM)].includes(r[0])).forEach(r => set(r[2], on[r[0]]));
     zoomRules();
   }
   $("layers").addEventListener("change", e => { const k = e.target.dataset.k; if (k) { on[k] = e.target.checked; apply(); } });
-  map.on("zoomend", zoomRules);
+  map.on("zoomend", zoomRules); map.on("moveend", loadStreetTiles);
   apply();
 
   // ---------------- background maps

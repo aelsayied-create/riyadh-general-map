@@ -1,0 +1,73 @@
+name: OpenStreetMap data + GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      refresh_osm:
+        description: "Download OpenStreetMap data again"
+        type: boolean
+        default: true
+  schedule:
+    - cron: "17 2 1 * *"   # monthly refresh, 1st of the month
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decide whether to download OSM data
+        id: need
+        run: |
+          if [ ! -f web/data/osm/manifest.json ] || [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.refresh_osm }}" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-python@v5
+        if: steps.need.outputs.run == 'true'
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        if: steps.need.outputs.run == 'true'
+        with: { node-version: "20" }
+
+      - name: Download and prepare OpenStreetMap layers
+        if: steps.need.outputs.run == 'true'
+        run: |
+          pip install geopandas pyogrio shapely
+          npm install -g osmtogeojson
+          python scripts/fetch_osm.py
+
+      - name: Commit the new data
+        if: steps.need.outputs.run == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data/osm
+          git diff --cached --quiet || git commit -m "OpenStreetMap data $(date +%F)"
+          git push
+
+      - uses: actions/configure-pages@v5
+        with: { enablement: true }
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: web }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
