@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 200
     steps:
       - uses: actions/checkout@v4
 
@@ -39,21 +39,28 @@ jobs:
         if: steps.need.outputs.run == 'true'
         with: { node-version: "20" }
 
-      - name: Download and prepare OpenStreetMap layers
+      - name: Install tools
         if: steps.need.outputs.run == 'true'
         run: |
           pip install geopandas pyogrio shapely
           npm install -g osmtogeojson
-          python scripts/rcrc_transport.py --download || echo "RCRC refresh skipped"
-          python scripts/municipalities.py || echo "municipalities skipped"
-          python scripts/fetch_osm.py
-
-      - name: Commit the new data
-        if: steps.need.outputs.run == 'true'
-        run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Royal Commission data and municipalities (quick)
+        if: steps.need.outputs.run == 'true'
+        run: |
+          python scripts/rcrc_transport.py --download || echo "RCRC refresh skipped"
+          python scripts/municipalities.py || echo "municipalities skipped"
           git add web/data data_src
+          git diff --cached --quiet || git commit -m "RCRC data and municipalities $(date +%F)"
+          git pull --rebase -X theirs origin main && git push
+
+      - name: OpenStreetMap layers (slow)
+        if: steps.need.outputs.run == 'true'
+        timeout-minutes: 150
+        run: |
+          python -u scripts/fetch_osm.py
+          git add web/data/osm
           git diff --cached --quiet || git commit -m "OpenStreetMap data $(date +%F)"
-          git pull --rebase -X theirs origin main
-          git push
+          git pull --rebase -X theirs origin main && git push

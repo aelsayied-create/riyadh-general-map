@@ -23,16 +23,16 @@ def overpass(query, tag):
     """Run a query (with retries / fallback endpoints) and return a GeoDataFrame via osmtogeojson."""
     raw, gj = os.path.join(RAW, tag + ".json"), os.path.join(RAW, tag + ".geojson")
     body = urllib.parse.urlencode({"data": query}).encode()
-    for attempt in range(8):
+    for attempt in range(5):
         url = ENDPOINTS[attempt % len(ENDPOINTS)]
         try:
             req = urllib.request.Request(url, data=body, headers={"User-Agent": "riyadh-general-map (GitHub Actions)"})
-            with urllib.request.urlopen(req, timeout=400) as r, open(raw, "wb") as f:
+            with urllib.request.urlopen(req, timeout=300) as r, open(raw, "wb") as f:
                 f.write(r.read())
             break
         except Exception as e:  # 429/504/timeouts: wait and try the next endpoint
             print(f"  {tag}: {url} failed ({e}); retrying", flush=True)
-            time.sleep(20 + 20 * attempt)
+            time.sleep(15 + 15 * attempt)
     else:
         sys.exit(f"Overpass failed for {tag}")
     subprocess.run(["osmtogeojson", raw], stdout=open(gj, "w"), check=True)
