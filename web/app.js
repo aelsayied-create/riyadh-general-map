@@ -102,8 +102,8 @@ const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "
 // ---------------- map
 async function start() {
   const get = n => fetch(`data/${n}`).then(r => r.json());
-  const [RG, GV, DS, NB, ML, MS, HW, RW, AP, TW, BS, PR, DRT, BR] = await Promise.all(
-    ["region", "governorates", "districts", "neighbours", "metro_lines", "metro_stations", "highways", "railways", "airports", "towns", "bus_stops", "park_ride", "on_demand", "bus_routes"]
+  const [RG, GV, DS, NB, ML, MS, RW, AP, TW, BS, PR, DRT, BR] = await Promise.all(
+    ["region", "governorates", "districts", "neighbours", "metro_lines", "metro_stations", "railways", "airports", "towns", "bus_stops", "park_ride", "on_demand", "bus_routes"]
       .map(n => get(n + ".geojson")));
   const S = GV; // used by the drawing tools to name the governorate
 
@@ -115,6 +115,7 @@ async function start() {
   const cssv = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
   const ringsOf = g => (g.type === "Polygon" ? [g.coordinates] : g.coordinates).flat();
   const asLines = fc => ({ type: "FeatureCollection", features: fc.features.map(f => ({ type: "Feature", properties: f.properties, geometry: { type: "MultiLineString", coordinates: ringsOf(f.geometry) } })) });
+  const withF = (f, l) => { l.feature = f; return l; };
   const label = (lat, lon, html, cls) => L.marker([lat, lon], { pane: "lbl", interactive: false, keyboard: false,
     icon: L.divIcon({ className: "lbl " + cls, html: `<span>${html}</span>`, iconSize: [0, 0] }) });
   const centre = f => { const b = L.geoJSON(f).getBounds(), c = b.getCenter(); return hit({ features: [f] }, c.lat, c.lng) ? c : b.getCenter(); };
@@ -141,7 +142,7 @@ async function start() {
   // sub-municipalities (البلديات) — built on GitHub by scripts/municipalities.py from RCRC open data
   let MU = null;
   const munL = L.layerGroup(), munLbl = L.layerGroup();
-  const MUN_STYLE = { color: "#5d4037", weight: 2, dashArray: "10 4 2 4", fill: true, fillOpacity: 0 };
+  const MUN_STYLE = { color: "#5d4037", weight: 2, dashArray: "10 4 2 4", fill: false };
   (window.EMBED ? Promise.resolve(window.EMBED["municipalities.geojson"]) : fetch("data/municipalities.geojson").then(r => r.ok ? r.json() : null)).catch(() => null).then(fc => {
     if (!fc || !fc.features || !fc.features.length) return;
     MU = fc;
@@ -157,10 +158,6 @@ async function start() {
       l.on("mouseover", () => l.setStyle(SYM.distHi)); l.on("mouseout", () => l.setStyle(SYM.dist));
     } });
 
-  const hwL = L.layerGroup([
-    L.geoJSON(HW, { pane: "lines", interactive: false, style: f => f.properties.major ? SYM.hwMajor.casing : SYM.hwMinor.casing }),
-    L.geoJSON(HW, { pane: "lines", interactive: false, style: f => f.properties.major ? SYM.hwMajor.line : SYM.hwMinor.line }),
-  ]);
   const rwL = L.layerGroup([L.geoJSON(RW, { pane: "lines", interactive: false, style: SYM.rail.base }),
                             L.geoJSON(RW, { pane: "lines", interactive: false, style: SYM.rail.dash })]);
 
@@ -174,9 +171,9 @@ async function start() {
   const lineChips = s => s.split(",").map(i => `<span class="chip" style="--c:${LINE_AR[i][1]}">${esc(LINE_AR[i][0].replace("المسار ", ""))}</span>`).join("");
   const stL = L.layerGroup(MS.features.map(f => {
     const p = f.properties, [x, y] = f.geometry.coordinates;
-    return L.circleMarker([y, x], { pane: "pts", radius: p.interchange ? 6.5 : 4.5, color: p.interchange ? "#1b1b1b" : p.color,
+    return withF(f, L.circleMarker([y, x], { pane: "pts", radius: p.interchange ? 6.5 : 4.5, color: p.interchange ? "#1b1b1b" : p.color,
       weight: p.interchange ? 2.5 : 2.5, fillColor: "#ffffff", fillOpacity: 1 })
-      .bindTooltip(`<div dir="rtl"><b>محطة ${esc(p.name_ar)}</b><br>${lineChips(p.lines)}${p.type_ar ? `<br><small>${esc(p.type_ar)}</small>` : ""}</div>`, { direction: "top", offset: [0, -6] });
+      .bindTooltip(`<div dir="rtl"><b>محطة ${esc(p.name_ar)}</b><br>${lineChips(p.lines)}${p.type_ar ? `<br><small>${esc(p.type_ar)}</small>` : ""}</div>`, { direction: "top", offset: [0, -6] }));
   }));
   const stLbl = L.layerGroup(MS.features.map(f => label(f.geometry.coordinates[1], f.geometry.coordinates[0], esc(f.properties.name_ar), "station")));
 
@@ -194,14 +191,14 @@ async function start() {
     const shape = c === "airstrip" || c === "heliport" ? `<rect x="2" y="2" width="20" height="20" rx="5" fill="${k.bg}" stroke="#fff" stroke-width="2"${dash}/>` : `<circle cx="12" cy="12" r="10.5" fill="${k.bg}" stroke="#fff" stroke-width="2"${dash}/>`;
     return L.divIcon({ className: "apico", html: `<svg width="${k.size}" height="${k.size}" viewBox="0 0 24 24" aria-hidden="true">${shape}${glyph}</svg>`, iconSize: [k.size, k.size], iconAnchor: [k.size / 2, k.size / 2] }); };
   const apMk = f => { const p = f.properties, [x, y] = f.geometry.coordinates;
-    return L.marker([y, x], { pane: "pts", icon: apIcon(p.class), zIndexOffset: p.class === "international" ? 500 : 0 })
-      .bindTooltip(`<div dir="rtl"><b>${esc(p.name_ar || p.name_en)}</b>${p.iata_code ? ` (${esc(p.iata_code)})` : ""}<br><small>${AP_CLS[p.class].ar}${p.name_ar ? ` · <span lang="en">${esc(p.name_en)}</span>` : ""}</small></div>`); };
+    return withF(f, L.marker([y, x], { pane: "pts", icon: apIcon(p.class), zIndexOffset: p.class === "international" ? 500 : 0 })
+      .bindTooltip(`<div dir="rtl"><b>${esc(p.name_ar || p.name_en)}</b>${p.iata_code ? ` (${esc(p.iata_code)})` : ""}<br><small>${AP_CLS[p.class].ar}${p.name_ar ? ` · <span lang="en">${esc(p.name_en)}</span>` : ""}</small></div>`)); };
   const apL = L.layerGroup(AP.features.filter(f => AP_CLS[f.properties.class]).map(apMk));
   const apLbl = L.layerGroup(AP.features.filter(f => ["international", "domestic", "construction", "airbase"].includes(f.properties.class))
     .map(f => label(f.geometry.coordinates[1], f.geometry.coordinates[0], esc(f.properties.name_ar || f.properties.name_en), "airport")));
 
   // bus: stops on a canvas (2,400 points), park-and-ride lots, on-demand zones
-  const busCanvas = L.canvas({ pane: "pts", padding: 0.3 });
+  const busCanvas = L.canvas({ pane: "pts", padding: 0.3, tolerance: 3 });
   const SHELTER_SYM = {
     terminal: { radius: 7,   color: "#ffffff", weight: 2,   fillColor: "#4a9e4a", z: 11 },
     brt:      { radius: 5.5, color: "#ffffff", weight: 1.8, fillColor: "#5db75d", z: 12 },
@@ -212,7 +209,7 @@ async function start() {
   };
   const busByType = Object.fromEntries(Object.keys(SHELTER_SYM).map(k => [k, L.layerGroup()]));
   BS.features.forEach(f => { const p = f.properties, [x, y] = f.geometry.coordinates, sym = SHELTER_SYM[p.shelter] || SHELTER_SYM.pole;
-    L.circleMarker([y, x], { renderer: busCanvas, fillOpacity: 1, ...sym })
+    withF(f, L.circleMarker([y, x], { renderer: busCanvas, fillOpacity: 1, ...sym }))
       .bindTooltip(`<div dir="rtl"><b>${esc(p.name_ar || p.name_en)}</b><br><small>${esc(p.shelter_ar)}${p.line ? ` · خط ${esc(p.line)}` : ""}</small></div>`)
       .addTo(busByType[p.shelter] || busByType.pole); });
   const busL = L.layerGroup(Object.values(busByType));
@@ -238,8 +235,8 @@ async function start() {
     onEachFeature: (f, l) => l.bindTooltip(`<div dir="rtl"><b>منطقة النقل عند الطلب</b><br><small lang="en">${esc(f.properties.name)}</small></div>`, { sticky: true }) });
 
   const TW_SYM = { 1: { radius: 7, weight: 3, color: "#1b1b1b", fillColor: "#ffffff" }, 2: { radius: 4.5, weight: 1.5, color: "#ffffff", fillColor: "#2b2a27" }, 3: { radius: 2.6, weight: 1, color: "#ffffff", fillColor: "#5b5750" } };
-  const twMk = f => L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { pane: "pts", fillOpacity: 1, ...TW_SYM[f.properties.rank] })
-    .bindTooltip(`<div dir="rtl"><b>${esc(f.properties.name_ar)}</b><br><small lang="en">${esc(f.properties.name_en)}</small></div>`);
+  const twMk = f => withF(f, L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { pane: "pts", fillOpacity: 1, ...TW_SYM[f.properties.rank] })
+    .bindTooltip(`<div dir="rtl"><b>${esc(f.properties.name_ar)}</b><br><small lang="en">${esc(f.properties.name_en)}</small></div>`));
   const twL = L.layerGroup(TW.features.filter(f => f.properties.rank < 3).map(twMk));       // city + governorate seats
   const twSmall = L.layerGroup(TW.features.filter(f => f.properties.rank === 3).map(twMk)); // villages: zoom 9+
   const twLbl = { 1: [], 2: [], 3: [] };
@@ -250,13 +247,13 @@ async function start() {
 
   // ---------------- OpenStreetMap layers (prepared on GitHub by scripts/fetch_osm.py)
   const OSM_ROAD = {
-    motorway:  { c: "#7f0000", w: 6.5, i: "#e3262b", iw: 4.2 },
-    trunk:     { c: "#7f0000", w: 5.5, i: "#e3262b", iw: 3.6 },
+    motorway:  { c: "#d04545", w: 6.5, i: "#f47a7a", iw: 4.2 },
+    trunk:     { c: "#d04545", w: 5.5, i: "#f47a7a", iw: 3.6 },
     primary:   { c: "#5f5f5f", w: 6.5, i: "#ffffff", iw: 4.4 },
     secondary: { c: "#8a8a8a", w: 5,   i: "#ffffff", iw: 3.2 },
   };
   const osmRoadsL = L.layerGroup(), osmStreetsL = L.layerGroup(), parksL = L.layerGroup(), parkLbl = L.layerGroup();
-  const streetCanvas = L.canvas({ pane: "lines", padding: 0.2 });
+  const streetCanvas = L.canvas({ pane: "lines", padding: 0.2, tolerance: 5 });
   const POI_SYM = {
     hotels:       { ar: "فندق",        bg: "#6a1b9a", z: 12,
       g: '<path d="M6 16V9h1.6v4h4.4v-2.6a1.4 1.4 0 0 1 1.4-1.4h3.2a1.4 1.4 0 0 1 1.4 1.4V16h-1.6v-1.4H7.6V16z" fill="#fff"/><circle cx="9.4" cy="11.3" r="1.3" fill="#fff"/>' },
@@ -270,7 +267,7 @@ async function start() {
     schools:      { ar: "مدرسة",       bg: "#c49a00", z: 15, dot: true },
   };
   const poiL = Object.fromEntries(Object.keys(POI_SYM).map(k => [k, L.layerGroup()]));
-  const poiCanvas = L.canvas({ pane: "pts", padding: 0.3 });
+  const poiCanvas = L.canvas({ pane: "pts", padding: 0.3, tolerance: 3 });
   const poiIcon = k => L.divIcon({ className: "apico", iconSize: [22, 22], iconAnchor: [11, 11],
     html: `<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="${POI_SYM[k].bg}" stroke="#fff" stroke-width="2"/>${POI_SYM[k].g}</svg>` });
   const poiTip = (k, p) => `<div dir="rtl"><b>${esc(p.name_ar || p.name_en || POI_SYM[k].ar)}</b><br><small>${POI_SYM[k].ar}${p.stars ? ` · ${"★".repeat(Math.min(+p.stars || 0, 5))}` : ""}${p.name_en && p.name_ar ? ` · <span lang="en">${esc(p.name_en)}</span>` : ""}</small></div>`;
@@ -311,7 +308,7 @@ async function start() {
     Object.keys(POI_SYM).forEach((k, i) => {
       const fc = pois[i]; if (!fc) return;
       fc.features.forEach(f => { const [x, y] = f.geometry.coordinates, sym = POI_SYM[k];
-        (sym.dot ? L.circleMarker([y, x], { renderer: poiCanvas, radius: 4, color: "#fff", weight: 1.2, fillColor: sym.bg, fillOpacity: 1 })
+        withF(f, sym.dot ? L.circleMarker([y, x], { renderer: poiCanvas, radius: 4, color: "#fff", weight: 1.2, fillColor: sym.bg, fillOpacity: 1 })
                  : L.marker([y, x], { pane: "pts", icon: poiIcon(k) })).bindTooltip(poiTip(k, f.properties)).addTo(poiL[k]); });
     });
     document.querySelectorAll("#layers input[data-osm]").forEach(i => { i.disabled = false; i.closest("label").classList.remove("off"); });
@@ -329,7 +326,6 @@ async function start() {
     ["النقل"],
     ["metro", "مترو الرياض", metroL, true, `<i class="ln metro"></i>`],
     ["stations", "محطات المترو", stL, true, `<i class="dot" style="background:#fff;box-shadow:0 0 0 2px #00ade5"></i>`],
-    ["hw", "الطرق الإقليمية (Natural Earth)", hwL, false, `<i class="ln" style="background:#e3262b;box-shadow:0 0 0 1px #7f0000"></i>`],
     ["rail", "السكك الحديدية", rwL, false, `<i class="ln" style="background:repeating-linear-gradient(90deg,#3b3b3b 0 5px,#fff 5px 10px);box-shadow:0 0 0 1px #3b3b3b"></i>`],
     ["air", "المطارات", apL, true, `<i class="ico" style="background:#0b3c5d"></i>`],
     ["busRoutes", "خطوط الحافلات", brL, false, `<i class="ln" style="background:linear-gradient(90deg,#5db75d 0 25%,#74c474 25% 50%,#8fd18f 50% 75%,#a9dca9 75%)"></i>`],
@@ -337,7 +333,7 @@ async function start() {
     ["pr", "مواقف «اركن وارتحل»", prL, false, `<i style="background:rgba(0,176,240,.35);border:1.5px solid #0077b6;color:#0077b6;font-style:normal;font-size:9px;font-weight:700;line-height:9px;text-align:center">P</i>`],
     ["drt", "مناطق النقل عند الطلب", drtL, false, `<i style="background:rgba(122,210,96,.2);border:1.5px dashed #2e7d32"></i>`],
     ["الشوارع والأماكن (OpenStreetMap)"],
-    ["osmRoads", "الطرق السريعة والرئيسية", osmRoadsL, true, `<i class="ln" style="background:#e3262b;box-shadow:0 0 0 1px #7f0000"></i>`, 1],
+    ["osmRoads", "الطرق السريعة والرئيسية", osmRoadsL, true, `<i class="ln" style="background:#f47a7a;box-shadow:0 0 0 1px #d04545"></i>`, 1],
     ["streets", "الشوارع الداخلية", osmStreetsL, true, `<i class="ln" style="background:#9a9a9a"></i>`, 1],
     ["parks", "الحدائق والمساحات الخضراء", parksL, true, `<i style="background:#a5d98a;border:1px solid #5a9e3c"></i>`, 1],
     ["hotels", "الفنادق", poiL.hotels, true, `<i class="ico" style="background:#6a1b9a"></i>`, 1],
@@ -352,6 +348,49 @@ async function start() {
     ["towns", "المدن والبلدات", twL, false, `<i class="dot" style="background:#2b2a27"></i>`],
     ["labels", "الأسماء", L.layerGroup(), false, `<i style="background:none;font-style:normal;font-size:11px;line-height:11px;font-weight:700">أ</i>`],
   ];
+
+  // ---------------- click a feature → its attributes
+  const FIELD_AR = { name_ar: "الاسم", name_en: "الاسم بالإنجليزية", name: "الاسم", class: "التصنيف", kind: "النوع", ref: "رقم الطريق", oneway: "اتجاه واحد",
+    stars: "النجوم", operator: "الجهة المشغلة", line: "الخط", line_id: "رقم المسار", lines: "المسارات", from_ar: "من", to_ar: "إلى", from_en: "From", to_en: "To",
+    length_km: "الطول (كم)", stop_id: "رقم الموقف", shelter_ar: "نوع الموقف", stage: "المرحلة", district_id: "رقم الحي", city_ar: "المدينة", city_en: "City",
+    area_km2: "المساحة (كم²)", districts: "عدد الأحياء", corridor_ar: "المحور", corridor_en: "Corridor", type_ar: "نوع المحطة", interchange: "محطة تبادلية",
+    iata_code: "رمز IATA", ident: "رمز المطار", elevation_ft: "الارتفاع (قدم)", rank: "الرتبة", city_id: "رقم المدينة" };
+  const HIDE = new Set(["color", "shelter", "major", "type", "category"]);
+  const VAL_AR = { motorway: "طريق سريع", trunk: "طريق رئيسي سريع", primary: "طريق رئيسي", secondary: "طريق ثانوي", tertiary: "شارع فرعي رئيسي",
+    residential: "شارع سكني", unclassified: "شارع غير مصنف", living_street: "شارع سكني مشترك", pedestrian: "ممر مشاة", park: "حديقة", garden: "حديقة",
+    recreation_ground: "منطقة ترفيهية", nature_reserve: "محمية طبيعية", grass: "مسطح أخضر", village_green: "ساحة خضراء", forest: "أشجار",
+    hotel: "فندق", motel: "موتيل", guest_house: "دار ضيافة", hostel: "نُزل", apartment: "شقق فندقية", hospital: "مستشفى", clinic: "عيادة",
+    university: "جامعة", college: "كلية", school: "مدرسة", place_of_worship: "مسجد", mall: "مركز تسوق", museum: "متحف", attraction: "معلم سياحي",
+    viewpoint: "مطل", gallery: "معرض", zoo: "حديقة حيوان", theme_park: "مدينة ملاهٍ", main: "خط رئيسي", brt: "نقل سريع (BRT)", community: "خط مجتمعي",
+    feeder: "خط مغذٍّ", international: "مطار دولي", domestic: "مطار محلي", construction: "قيد الإنشاء", airbase: "قاعدة جوية", airstrip: "مهبط طائرات",
+    yes: "نعم", no: "لا", true: "نعم", false: "لا", True: "نعم", False: "لا", "-1": "نعم (عكسي)" };
+  const RANK_AR = { 1: "عاصمة المنطقة", 2: "مقر محافظة", 3: "بلدة / قرية" };
+  const inGroup = (g, l) => g === l || (g instanceof L.LayerGroup && (g.hasLayer(l) || g.getLayers().some(c => c instanceof L.LayerGroup && inGroup(c, l))));
+  const ROWS = () => LAYERS.filter(r => r.length > 1).concat([["mun", "البلديات", munL], ["dist", "الأحياء", distL]]);
+  map.on("layeradd", ev => {
+    const l = ev.layer;
+    if (!l.feature || l._info || l.options.interactive === false) return;
+    l._info = true;
+    l.on("click", e => {
+      if (draw.mode) return;
+      const row = ROWS().find(r => r[2] && inGroup(r[2], l));
+      if (row && (row[0] === "mun" || row[0] === "dist")) return;          // boundaries: the side panel already reports them
+      L.DomEvent.stopPropagation(e);
+      const p = l.feature.properties || {};
+      const rows = Object.entries(p).filter(([k, v]) => !HIDE.has(k) && v !== null && v !== "" && v !== "None").map(([k, v]) => {
+        let val = String(v);
+        if (["class", "kind", "oneway", "interchange"].includes(k)) val = VAL_AR[val] || val;
+        if (k === "rank") val = RANK_AR[v] || val;
+        if (k === "stars") val = "★".repeat(Math.min(+v || 0, 5)) || val;
+        if (k === "line_id" || k === "lines") val = String(v).split(",").map(i => LINE_AR[i] ? LINE_AR[i][0] : i).join("، ");
+        const en = /_en$/.test(k) || k === "ident" || k === "iata_code";
+        return `<tr><th>${FIELD_AR[k] || esc(k)}</th><td${en ? ' lang="en" dir="ltr"' : ""}>${esc(val)}</td></tr>`; }).join("");
+      const ll = e.latlng;
+      L.popup({ className: "finfo", maxWidth: 340, autoPanPadding: [30, 30] }).setLatLng(ll).setContent(
+        `<div dir="rtl"><div class="fi-h">${esc(row ? row[1] : "معلم")}</div>${rows ? `<table>${rows}</table>` : "<p>لا توجد بيانات وصفية</p>"}` +
+        `<div class="fi-c" lang="en" dir="ltr">${ll.lat.toFixed(6)}, ${ll.lng.toFixed(6)}</div></div>`).openOn(map);
+    });
+  });
   const on = {};
   $("layers").innerHTML = LAYERS.map(r => r.length === 1 ? `<h4>${r[0]}</h4>` :
     `<label${r[5] ? ` class="off" title="${r[5] === 2 ? "تظهر بعد تجهيز البلديات على GitHub" : "تظهر بعد تحميل بيانات OpenStreetMap على GitHub"}"` : ""}><input type="checkbox" data-k="${r[0]}" ${r[3] ? "checked" : ""}${r[5] === 1 ? " data-osm" : ""}${r[5] ? " disabled" : ""}>${r[4]}${r[1]}</label>`).join("") + `<p class="osmnote" id="osmNote">تظهر طبقات OpenStreetMap بعد نشر الخريطة على GitHub</p>`;

@@ -50,3 +50,12 @@ The site is published only on Netlify (behind the password); nothing is publishe
 - Full-resolution GIS layers: `Riyadh_General_Map.gdb` / `.gpkg` (delivered separately)
 
 Data © OpenStreetMap contributors (ODbL), geoBoundaries (CC BY 4.0), Natural Earth, OurAirports, National Address via homaily (GPL-3.0), Royal Commission for Riyadh City open data (KSA Open Data License), Riyadh Bus via aqar-app. Boundaries and names do not imply official endorsement.
+
+## Netlify credits
+
+Netlify's free plan has 300 credits a month, and every production deploy costs 15.
+To avoid spending credits on every push, `netlify.toml` skips the build unless the
+latest commit message contains `[deploy]`. The monthly data refresh adds `[deploy]`
+automatically, so it publishes once a month. To publish a change yourself, include
+`[deploy]` in the commit message, or use **Deploys → Trigger deploy** in Netlify.
+Map data is cached in the browser for a day to reduce bandwidth.

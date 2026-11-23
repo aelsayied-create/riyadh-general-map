@@ -1,2 +1,12 @@
 [build]
   publish = "web"
+  # Save Netlify credits (each production deploy costs 15 credits):
+  # publish only when the latest commit message contains [deploy].
+  # Exit code 0 tells Netlify to skip the build.
+  ignore = "git log -1 --pretty=%B | grep -qF '[deploy]' && exit 1 || exit 0"
+
+# Let browsers keep the map data for a day, so repeat visits use less bandwidth.
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "private, max-age=86400"

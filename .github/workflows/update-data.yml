@@ -58,5 +58,5 @@ jobs:
         run: |
           python -u scripts/fetch_osm.py
           git add web/data/osm
-          git diff --cached --quiet || git commit -m "OpenStreetMap data $(date +%F)"
+          git diff --cached --quiet || git commit -m "OpenStreetMap data $(date +%F) ${{ github.event_name == 'schedule' && '[deploy]' || '' }}"
           git pull --rebase -X theirs origin main && git push
