@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الخريطة العامة للرياض</title>
+<meta name="description" content="خريطة مرجعية عامة لمنطقة الرياض من بيانات مفتوحة، مع البحث بالإحداثيات والرسم.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="locked">
+
+<!-- password gate -->
+<div class="gate" id="gate">
+  <form class="gate-card" id="gateForm" autocomplete="off">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="40" height="40"><rect width="32" height="32" rx="8" fill="#f2c14e"/><path d="M8 23V9h4v14zM14 23v-9h4v9zM20 23v-6h4v6z" fill="#17322c"/></svg></div>
+    <h1>الخريطة العامة للرياض</h1>
+    <p class="ar">Riyadh General Map</p>
+    <label for="pw">كلمة المرور</label>
+    <input id="pw" type="password" required autofocus dir="ltr">
+    <button type="submit">فتح الخريطة</button>
+    <p class="gate-err" id="gateErr" hidden>كلمة المرور غير صحيحة</p>
+  </form>
+</div>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#f2c14e"/><path d="M8 23V9h4v14zM14 23v-9h4v9zM20 23v-6h4v6z" fill="#17322c"/></svg></div>
+    <div>
+      <h1>الخريطة العامة للرياض <span class="ar" lang="en">· Riyadh General Map</span></h1>
+      <p>المنطقة · المحافظات · الأحياء · مترو الرياض · الطرق السريعة · المدن والبلدات · البحث بالإحداثيات · الرسم</p>
+    </div>
+  </div>
+  <button class="badge" id="lock" type="button" title="تسجيل الخروج">تسجيل الخروج</button>
+</header>
+
+<section class="bar">
+  <form class="search" id="search" autocomplete="off">
+    <input id="q" type="text" placeholder="24.7136, 46.6753  ·  24°42'49&quot;N 46°40'31&quot;E  ·  38N 669460 2734272" aria-label="الإحداثيات" dir="ltr">
+    <button type="submit">بحث</button>
+    <button type="button" id="clear" class="ghost">مسح</button>
+  </form>
+  <span class="hint">خط العرض، خط الطول (عشري أو درجات ودقائق وثوانٍ) أو UTM · أو انقر على الخريطة</span>
+</section>
+
+<div class="layout">
+  <main class="mapbox">
+    <div id="map" aria-label="خريطة الرياض" dir="ltr"></div>
+    <div class="map-ui"><div class="seg" id="basemap" role="group" aria-label="خريطة الأساس"><button data-b="gray" class="on">رمادية</button><button data-b="osm">OpenStreetMap</button><button data-b="streets">شوارع</button><button data-b="imagery">قمر صناعي</button></div></div>
+    <details class="legend" id="layerbox" open><summary>الطبقات</summary><div id="layers"></div></details>
+    <div class="drawbar" id="drawbar" role="toolbar" aria-label="الرسم">
+      <button data-d="point" title="رسم نقطة">نقطة</button>
+      <button data-d="line" title="رسم خط">خط</button>
+      <button data-d="poly" title="رسم مضلع">مضلع</button>
+    </div>
+    <div class="drawhint" id="drawhint" hidden>
+      <span id="drawmsg"></span>
+      <button id="dUndo" type="button">تراجع</button>
+      <button id="dFinish" type="button" class="primary">إنهاء</button>
+      <button id="dCancel" type="button">إلغاء</button>
+    </div>
+    <div class="cursor" id="cursor"></div>
+  </main>
+  <aside class="panel" id="panel"><div id="result"></div><section class="drawings" id="drawings" aria-label="الرسومات"></section></aside>
+</div>
+
+<footer class="foot">
+  <b>البيانات المفتوحة</b>: الأحياء والمدن — العنوان الوطني (maps.address.gov.sa) عبر مستودع homaily/Saudi-Arabia-Regions-Cities-and-Districts (GPL-3.0)؛ حدود المنطقة والمحافظات — geoBoundaries (CC BY 4.0)؛ الطرق السريعة والسكك الحديدية والمطار — Natural Earth (ملكية عامة)؛ خطوط ومحطات المترو — الرياض للنقل (riyadhbus.sa) عبر مستودع aqar-app، لأغراض معلوماتية.
+  خرائط الأساس: © OpenStreetMap contributors (ODbL)؛ Esri, HERE, Garmin, Maxar, Earthstar Geographics. الحدود والأسماء المعروضة لا تعني اعتماداً رسمياً.
+  <b>دراسة نموذجية شخصية من إعداد Amna Abdein.</b>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

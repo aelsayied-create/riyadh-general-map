@@ -1,0 +1,164 @@
+/* VOICE: calm reference map, same family as the Sudan explorer
+   IDEA: a printed general map sheet with a coordinate finder beside it
+   PICTURE: the map itself fills the screen
+   COLOUR and TYPE: deep green brand bar, saffron accent, warm paper ground; system UI + Noto Sans Arabic
+   LAYOUT: header, search bar, map + result panel; stacks below 860px */
+[hidden]{display:none!important}
+:root{
+  color-scheme:light;
+  --bg:#f4f3ef;--surface:#fdfcfa;--surface-2:#efede7;--ink:#151513;--ink-2:#55534d;--muted:#7d7a72;--line:#dddad2;
+  --brand:#17322c;--brand-2:#234a41;--accent:#b5452e;--link:#1f6f8b;--gold:#f2c14e;
+  --sea:#cfe3ef;--land:#fbf8f1;--nb:#e7e4dd;--shadow:0 1px 2px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.04);
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121311;--surface:#1a1b19;--surface-2:#252622;--ink:#f0eee9;--ink-2:#c4c1b8;--muted:#98958c;--line:#34342f;
+  --brand:#0e211d;--brand-2:#173a32;--accent:#d8664c;--link:#5fb0cf;--sea:#1b2a33;--land:#2a2a26;--nb:#1f201d;--shadow:none;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#121311;--surface:#1a1b19;--surface-2:#252622;--ink:#f0eee9;--ink-2:#c4c1b8;--muted:#98958c;--line:#34342f;
+  --brand:#0e211d;--brand-2:#173a32;--accent:#d8664c;--link:#5fb0cf;--sea:#1b2a33;--land:#2a2a26;--nb:#1f201d;--shadow:none;
+}}
+*{box-sizing:border-box;margin:0;padding:0;min-width:0}
+html,body{height:100%}
+body{font-family:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Tahoma,"Noto Sans Arabic",sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.45;display:flex;flex-direction:column;overflow-x:clip}
+button,input{font:inherit;color:inherit}
+a{color:var(--link)}
+
+.top{background:var(--brand);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{flex:1;min-width:220px;display:flex;gap:11px;align-items:center}
+.logo{width:32px;height:32px;flex:none;line-height:0}
+.brand h1{font-size:18px;font-weight:700;line-height:1.2}
+.brand h1 .ar{font-family:system-ui,sans-serif;font-weight:500;opacity:.8;font-size:15px}
+.brand p{font-size:12px;opacity:.75}
+.badge{text-decoration:none;display:inline-flex;align-items:center;background:var(--gold);color:#2a1d00;font-size:12px;font-weight:700;padding:6px 14px;border-radius:14px;border:0;cursor:pointer;min-height:32px}
+.badge:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:9px 16px;background:var(--brand-2)}
+.search{display:flex;gap:6px;flex:1 1 520px;max-width:760px}
+.search input{flex:1;border:1px solid transparent;border-radius:8px;padding:8px 12px;font-size:16px;background:var(--surface);color:var(--ink);min-height:40px}
+.search button{border:0;border-radius:8px;padding:0 18px;font-weight:700;background:var(--gold);color:#2a1d00;cursor:pointer;min-height:40px}
+.search button.ghost{background:transparent;color:#e8efe9;border:1px solid rgba(255,255,255,.35);font-weight:600}
+.bar .hint{color:#dfe9e3;font-size:12px;opacity:.85}
+
+.layout{flex:1;display:grid;grid-template-columns:1fr 360px;min-height:560px}
+.mapbox{position:relative;min-height:0}
+#map{position:absolute;inset:0;background:#e8e8e6}
+.map-ui{position:absolute;top:10px;right:10px;z-index:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.seg button{border:0;background:none;padding:6px 12px;font-size:12.5px;cursor:pointer;color:var(--ink-2)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--ink);color:var(--surface);font-weight:600}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.legend{position:absolute;left:10px;bottom:24px;z-index:600;background:var(--surface);padding:8px 10px;border-radius:6px;box-shadow:0 1px 5px rgba(0,0,0,.2);font-size:12.5px;border:1px solid var(--line);max-height:calc(100% - 120px);overflow:auto}
+.legend summary{font-size:12px;font-weight:700;cursor:pointer;list-style-position:inside;min-height:24px}
+.legend h4{font-size:11px;color:var(--ink-2);margin:2px 0 4px;font-weight:700}
+.legend label{display:flex;align-items:center;gap:7px;margin:3px 0;cursor:pointer;white-space:nowrap}
+.legend input{accent-color:var(--brand-2);width:15px;height:15px}
+.legend i{width:18px;height:11px;border-radius:2px;display:inline-block;flex:none}
+.legend i.ln{height:3px}.legend i.dot{width:10px;height:10px;border-radius:50%;margin:0 4px}
+.cursor{direction:ltr;position:absolute;right:10px;bottom:24px;z-index:600;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-2);pointer-events:none}
+
+.panel{background:var(--surface);border-left:1px solid var(--line);overflow-y:auto;padding:16px}
+.panel h2{font-size:16px;line-height:1.25}
+.panel h2 .ar{font-weight:500;color:var(--ink-2);font-size:15px}
+.panel h3{font-size:13px;margin:16px 0 6px}
+.panel .hint{font-size:12.5px;color:var(--muted);margin:4px 0 10px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.fact{background:var(--surface-2);border-radius:7px;padding:8px 10px}
+.fact.wide{grid-column:1/-1}
+.fact span{font-size:11px;color:var(--ink-2);display:block}
+.fact b{font-size:15px;font-variant-numeric:tabular-nums;display:block;overflow-wrap:anywhere}
+.fact small{font-size:11.5px;color:var(--muted);display:block}
+.status{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:10px;margin-top:6px}
+.status.in{background:#dcefe2;color:#14532d}.status.out{background:#fbe3dc;color:#7a1f10}
+.examples{list-style:none;display:grid;gap:6px}
+.examples button{width:100%;text-align:start;border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:8px 10px;cursor:pointer;font-size:13px;min-height:40px}
+.examples button:hover{border-color:var(--ink)}
+.examples small{color:var(--muted);font-variant-numeric:tabular-nums}
+.copy{margin-top:12px;width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-weight:600;cursor:pointer;min-height:40px}
+.copy:hover{border-color:var(--ink)}
+.err{background:#fbe3dc;color:#7a1f10;border-radius:7px;padding:9px 11px;font-size:13px;margin-top:10px}
+
+.foot{font-size:11.5px;color:var(--muted);padding:9px 16px;border-top:1px solid var(--line);background:var(--surface)}
+
+/* map labels */
+.lbl{background:none;border:0;white-space:nowrap;font-family:inherit;pointer-events:none;text-align:center}
+.lbl span{display:inline-block;transform:translate(-50%,-50%)}
+.lbl.country span{font-size:14px;letter-spacing:0;color:#8b877e;font-weight:600}
+.lbl.sea span{font-size:13px;color:#4a7fb0;font-weight:500}
+.lbl.gov span{font-size:12px;color:#55534d;font-weight:600;text-shadow:0 0 3px var(--land),0 0 3px var(--land)}
+.lbl.city span{font-size:11.5px;color:var(--ink);transform:translate(6px,-50%);text-shadow:0 0 3px #fff,0 0 3px #fff}
+.lbl.city.cap span{font-weight:700;font-size:13px}
+.lbl.region span{font-size:12px;color:#8b6f47;font-weight:500}
+.leaflet-tooltip{font-size:12px}
+.leaflet-container{font-family:inherit}
+.leaflet-tooltip{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif}
+.lbl span{font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif}
+
+/* drawing */
+.drawbar{position:absolute;top:10px;left:56px;z-index:650;display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.drawbar button{border:0;background:none;padding:6px 12px;font-size:12.5px;cursor:pointer;color:var(--ink-2);min-height:32px}
+.drawbar button+button{border-left:1px solid var(--line)}
+.drawbar button.on{background:#ff7a00;color:#fff;font-weight:700}
+.drawhint{position:absolute;top:52px;left:56px;z-index:650;background:var(--ink);color:var(--surface);border-radius:6px;padding:5px 6px 5px 10px;font-size:12.5px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:calc(100% - 70px);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.drawhint button{border:1px solid rgba(255,255,255,.35);background:none;color:inherit;border-radius:5px;padding:3px 9px;cursor:pointer;font-size:12px;min-height:28px}
+.drawhint button.primary{background:#ff7a00;border-color:#ff7a00;font-weight:700}
+.drawhint button:disabled{opacity:.4;cursor:default}
+#map.drawing{cursor:crosshair}#map.drawing .leaflet-interactive{cursor:crosshair}
+.drawings{margin-top:18px;padding-top:4px;border-top:1px solid var(--line)}
+.drawings h3 .ar{font-weight:500;color:var(--ink-2)}
+.dlist{list-style:none;display:grid;gap:6px}
+.dlist li{display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;background:var(--surface-2);border-radius:7px;padding:6px 8px}
+.dlist input{width:100%;border:1px solid transparent;background:transparent;border-radius:5px;padding:2px 4px;font-size:14px;font-weight:600}
+.dlist input:hover,.dlist input:focus{border-color:var(--line);background:var(--surface)}
+.dlist small{display:block;color:var(--muted);font-size:11.5px;padding:0 4px;font-variant-numeric:tabular-nums}
+.dlist li>button{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:4px 8px;cursor:pointer;font-size:12px;min-height:30px}
+.dico{width:14px;height:14px;display:inline-block}
+.dico.point{border-radius:50%;background:#ff7a00;border:2px solid #fff;box-shadow:0 0 0 1px #ff7a00}
+.dico.line{height:3px;background:#ff7a00;transform:rotate(-30deg)}
+.dico.poly{background:rgba(255,122,0,.25);border:2px solid #ff7a00;border-radius:2px}
+.dbtns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.dbtns button{flex:1;padding:8px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-weight:600;cursor:pointer;min-height:40px;font-size:12.5px;white-space:nowrap}
+.dbtns button.primary{background:var(--brand-2);border-color:var(--brand-2);color:#fff}
+.copy+.copy{margin-top:6px}
+
+/* password gate */
+.gate{position:fixed;inset:0;z-index:5000;background:var(--brand);display:grid;place-items:center;padding:16px}
+.gate-card{background:var(--surface);color:var(--ink);border-radius:12px;padding:28px 26px;width:min(380px,100%);display:grid;gap:8px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.gate-card h1{font-size:22px;margin-top:6px}
+.gate-card .ar{color:var(--ink-2);font-size:16px;margin-top:-6px}
+.gate-card label{font-size:12.5px;color:var(--ink-2);margin-top:10px}
+.gate-card input{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:16px;background:var(--surface);min-height:44px}
+.gate-card button{border:0;border-radius:8px;background:var(--brand-2);color:#fff;font-weight:700;padding:11px;cursor:pointer;min-height:44px;margin-top:4px}
+.gate-err{color:var(--accent);font-size:13px;font-weight:600}
+body.locked .top,body.locked .bar,body.locked .layout,body.locked .foot{visibility:hidden}
+
+@media (max-width:600px){.map-ui{top:52px}.drawhint{top:94px}}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr}
+  .mapbox{height:62vh}
+  .panel{border-left:0;border-top:1px solid var(--line)}
+  .brand h1 .ar{font-family:system-ui,sans-serif;display:block}
+  .bar .hint{display:none}
+  .legend{font-size:11.5px;bottom:34px}
+  html,body{height:auto}body{min-height:100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+#map.on-imagery .lbl.city span{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+#map.on-imagery .lbl.gov span{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+@media (max-width:520px){.seg button{padding:6px 8px;font-size:12px}}
+
+/* Riyadh symbology extras */
+.legend i.ln.metro{height:5px;background:linear-gradient(90deg,#00ade5 0 17%,#f0493a 17% 34%,#f68d39 34% 50%,#ffd105 50% 67%,#43b649 67% 84%,#984c9d 84%)}
+.chip,.fact .chip{display:inline-block;width:auto;font-size:11px;font-weight:600;padding:1px 7px;border-radius:9px;margin:2px 0 0 3px;color:#fff;background:var(--c)}
+.chip[style*="#ffd105"]{color:#3a2f00}
+.lbl.station span{font-size:11px;color:#1b1b1b;font-weight:600;transform:translate(8px,-50%);text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 2px #fff}
+.lbl.dist span{font-size:11px;color:#5b5750;text-shadow:0 0 3px #fff,0 0 3px #fff}
+.lbl.city.r1 span{font-size:16px;font-weight:700;color:#1b1b1b;transform:translate(10px,-50%)}
+.lbl.city.r2 span{font-size:12.5px;font-weight:600}
+.lbl.city.r3 span{font-size:11px;color:#3d3b36}
+.lbl.gov span{font-size:12.5px;color:#6b5c47;font-weight:600}
+#map.on-imagery .lbl.station span,#map.on-imagery .lbl.dist span{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+.back{font-size:12px;color:var(--link);background:none;border:0;cursor:pointer;margin-bottom:6px;min-height:28px}
