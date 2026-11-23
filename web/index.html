@@ -31,7 +31,18 @@
   <span class="hint">خط العرض، خط الطول (عشري أو درجات ودقائق وثوانٍ) أو UTM · أو انقر على الخريطة</span>
 </section>
 
+<div class="pr-bar" id="prBar" hidden>
+  <label>العنوان <input id="prTitle" type="text" value="الخريطة العامة للرياض"></label>
+  <label>عنوان فرعي <input id="prSub" type="text" placeholder="اختياري"></label>
+  <label>الورق <select id="prPaper"><option value="A4">A4</option><option value="A3">A3</option></select></label>
+  <label>الاتجاه <select id="prOrient"><option value="landscape">أفقي</option><option value="portrait">عمودي</option></select></label>
+  <label class="chk"><input id="prKey" type="checkbox" checked> المفتاح</label>
+  <span class="pr-tip">حرّكي الخريطة وكبّري على الجزء المطلوب</span>
+  <button type="button" id="prGo" class="primary">طباعة / حفظ PDF</button>
+  <button type="button" id="prClose">رجوع</button>
+</div>
 <div class="layout">
+  <div class="pr-head" id="prHead"><div><h2 id="prH"></h2><p id="prS"></p></div><div class="pr-meta" id="prMeta"></div></div>
   <main class="mapbox">
     <div id="map" aria-label="خريطة الرياض" dir="ltr"></div>
     <div class="map-ui"><div class="seg" id="basemap" role="group" aria-label="خريطة الأساس"><button data-b="gray" class="on">رمادية</button><button data-b="osm">OpenStreetMap</button><button data-b="streets">شوارع</button><button data-b="imagery">قمر صناعي</button></div></div>
@@ -47,8 +58,12 @@
       <button id="dFinish" type="button" class="primary">إنهاء</button>
       <button id="dCancel" type="button">إلغاء</button>
     </div>
+    <button type="button" class="printbtn" id="printBtn" title="طباعة الخريطة"><svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v5H7zM5 9h14a2 2 0 0 1 2 2v6h-4v4H7v-4H3v-6a2 2 0 0 1 2-2zm4 7v3h6v-3z" fill="currentColor"/></svg>طباعة</button>
     <div class="cursor" id="cursor"></div>
+    <div class="pr-legend" id="prLegend"></div>
+    <div class="pr-north" aria-hidden="true"><svg width="34" height="46" viewBox="0 0 34 46"><path d="M17 4 27 34 17 28 7 34z" fill="#1b1b1b"/><path d="M17 4 7 34l10-6z" fill="#fff" stroke="#1b1b1b" stroke-width="1.2"/><text x="17" y="45" text-anchor="middle" font-size="11" font-weight="700" font-family="Arial">N</text></svg></div>
   </main>
+  <div class="pr-foot" id="prFoot"></div>
   <aside class="panel" id="panel"><div id="result"></div><section class="drawings" id="drawings" aria-label="الرسومات"></section><details class="key" id="symkey"><summary>دليل الرموز</summary><div id="keybody"></div></details></aside>
 </div>
 

@@ -431,6 +431,50 @@ async function start() {
     keyRows("المطارات", Object.keys(AP_CLS).map(k => [apIcon(k).options.html.replace(/width="\d+" height="\d+"/, 'width="18" height="18"'), AP_CLS[k].ar])) +
     keyRows("الأماكن (OpenStreetMap)", Object.entries(POI_SYM).map(([k, v]) => [poiSvg(k, 20), `${v.ar} <small>· من زووم ${v.z}</small>`]));
 
+  // ---------------- print any part of the map with title, key, north arrow and scale
+  L.control.scale({ position: "bottomleft", imperial: false, maxWidth: 160 }).addTo(map);
+  const PAGE = { A4: [297, 210], A3: [420, 297] };       // mm, landscape
+  const pgStyle = document.head.appendChild(document.createElement("style"));
+  let prView = null;
+  function prLayout() {
+    const [L1, S1] = PAGE[$("prPaper").value], land = $("prOrient").value === "landscape";
+    const w = (land ? L1 : S1) - 16, h = (land ? S1 : L1) - 16;   // 8 mm margins
+    pgStyle.textContent = `@page{size:${$("prPaper").value} ${land ? "landscape" : "portrait"};margin:8mm}`;
+    document.documentElement.style.setProperty("--pw", w + "mm");
+    document.documentElement.style.setProperty("--mh", (h - 32) + "mm");     // header 20 mm + footer 12 mm
+    const b = map.getBounds(); map.invalidateSize({ pan: false }); map.fitBounds(b, { animate: false });
+  }
+  function prText() {
+    $("prH").textContent = $("prTitle").value || "الخريطة العامة للرياض";
+    $("prS").textContent = $("prSub").value; $("prS").hidden = !$("prSub").value;
+  }
+  function prLegend() {
+    const rows = LAYERS.filter(r => r.length > 1 && on[r[0]] && r[0] !== "labels" && r[4]);
+    $("prLegend").innerHTML = `<h4>المفتاح</h4>` + rows.map(r => `<div class="pl">${r[4]}<span>${r[1]}</span></div>`).join("");
+    $("prLegend").hidden = !$("prKey").checked || !rows.length;
+  }
+  function prOpen() {
+    prView = [map.getCenter(), map.getZoom()];
+    if (draw.mode) document.querySelector(`#drawbar button[data-d="${draw.mode}"]`).click();
+    document.body.classList.add("printing"); $("prBar").hidden = false;
+    const d = new Date(), bm = document.querySelector("#basemap .on");
+    $("prMeta").innerHTML = `<span>${d.toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { year: "numeric", month: "long", day: "numeric" })}</span>` +
+      `<span>خريطة الأساس: ${bm ? bm.textContent : ""}</span><span>الإحداثيات: WGS 84</span>`;
+    $("prFoot").textContent = "المصادر: الهيئة الملكية لمدينة الرياض (البيانات المفتوحة)، العنوان الوطني، © OpenStreetMap contributors، OurAirports، geoBoundaries، Esri. الحدود والأسماء المعروضة لا تعني اعتماداً رسمياً. إعداد: Amna Abdein.";
+    prText(); prLegend(); prLayout();
+  }
+  function prClose() {
+    document.body.classList.remove("printing"); $("prBar").hidden = true;
+    map.invalidateSize({ pan: false }); if (prView) map.setView(prView[0], prView[1], { animate: false });
+  }
+  $("printBtn").addEventListener("click", prOpen);
+  $("prClose").addEventListener("click", prClose);
+  ["prTitle", "prSub"].forEach(id => $(id).addEventListener("input", prText));
+  ["prPaper", "prOrient"].forEach(id => $(id).addEventListener("change", prLayout));
+  $("prKey").addEventListener("change", prLegend);
+  $("prGo").addEventListener("click", () => { $("prGo").disabled = true; setTimeout(() => { $("prGo").disabled = false; window.print(); }, 600); });
+  L.DomEvent.disableClickPropagation($("printBtn"));
+
   // ---------------- background maps
   const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
   const tl = (path, o = {}) => L.tileLayer(ESRI + path + "/MapServer/tile/{z}/{y}/{x}", { maxZoom: 20, ...o });
