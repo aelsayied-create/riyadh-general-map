@@ -191,3 +191,7 @@ body.locked .top,body.locked .bar,body.locked .layout,body.locked .foot{visibili
 .finfo tr + tr th, .finfo tr + tr td { border-top: 1px solid #eee9df; }
 .finfo .fi-c { margin-top: 6px; font-size: 11px; color: #8a8478; text-align: left; }
 .finfo p { margin: 0; color: #8a8478; }
+.apico.poi svg{filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.35))}
+.apico.poi:hover{z-index:1000!important}
+.apico.poi:hover svg{transform:scale(1.15);transition:transform .12s}
+#layers label svg{flex:none;margin:0 2px;vertical-align:middle}

@@ -263,13 +263,15 @@ async function start() {
     universities: { ar: "جامعة/كلية",  bg: "#3949ab", z: 12, g: '<path d="M12 6.5 4.8 10 12 13.5 19.2 10zM7.8 12.2v3.1c1.1 1 2.6 1.6 4.2 1.6s3.1-.6 4.2-1.6v-3.1L12 14.3z" fill="#fff"/>' },
     malls:        { ar: "مركز تسوق",   bg: "#ef6c00", z: 12, g: '<path d="M7.5 9.5h9l-.7 8H8.2zM9.6 9.5V8.6a2.4 2.4 0 0 1 4.8 0v.9" fill="none" stroke="#fff" stroke-width="1.6"/>' },
     attractions:  { ar: "معلم سياحي",  bg: "#6d4c41", z: 11, g: '<path d="m12 6.2 1.7 3.6 3.9.4-2.9 2.6.8 3.9L12 14.8l-3.5 1.9.8-3.9-2.9-2.6 3.9-.4z" fill="#fff"/>' },
-    mosques:      { ar: "مسجد",        bg: "#138d75", z: 15, dot: true },
-    schools:      { ar: "مدرسة",       bg: "#c49a00", z: 15, dot: true },
+    mosques:      { ar: "مسجد",        bg: "#138d75", z: 14, size: 24,
+      g: '<path d="M8.2 17v-3.3a3.8 3.8 0 0 1 7.6 0V17zM11.55 7.4h.9v2.3h-.9zM5.3 17v-6.6l.85-1.5.85 1.5V17zM17 17v-6.6l.85-1.5.85 1.5V17z" fill="#fff"/><circle cx="12" cy="6.9" r=".75" fill="#fff"/>' },
+    schools:      { ar: "مدرسة",       bg: "#b7791f", z: 14, size: 24,
+      g: '<path d="M6 17.2v-6.4l6-3.6 6 3.6v6.4h-4.1v-3.6h-3.8v3.6z" fill="#fff"/><path d="M12 4.6v2.6" stroke="#fff" stroke-width=".9"/><path d="M12.4 4.6h2.3l-.6.7.6.7h-2.3z" fill="#fff"/>' },
   };
   const poiL = Object.fromEntries(Object.keys(POI_SYM).map(k => [k, L.layerGroup()]));
-  const poiCanvas = L.canvas({ pane: "pts", padding: 0.3, tolerance: 3 });
-  const poiIcon = k => L.divIcon({ className: "apico", iconSize: [22, 22], iconAnchor: [11, 11],
-    html: `<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="${POI_SYM[k].bg}" stroke="#fff" stroke-width="2"/>${POI_SYM[k].g}</svg>` });
+  const poiSvg = (k, n) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.8" fill="${POI_SYM[k].bg}" stroke="#fff" stroke-width="1.8"/>${POI_SYM[k].g}</svg>`;
+  const poiIcon = k => { const n = POI_SYM[k].size || 28;
+    return L.divIcon({ className: "apico poi", iconSize: [n, n], iconAnchor: [n / 2, n / 2], html: poiSvg(k, n) }); };
   const poiTip = (k, p) => `<div dir="rtl"><b>${esc(p.name_ar || p.name_en || POI_SYM[k].ar)}</b><br><small>${POI_SYM[k].ar}${p.stars ? ` · ${"★".repeat(Math.min(+p.stars || 0, 5))}` : ""}${p.name_en && p.name_ar ? ` · <span lang="en">${esc(p.name_en)}</span>` : ""}</small></div>`;
   let OSM = null;
   const osmGet = n => (window.EMBED && ("osm/" + n) in window.EMBED) ? Promise.resolve(window.EMBED["osm/" + n]) : fetch(`data/osm/${n}`).then(r => r.ok ? r.json() : null);
@@ -305,11 +307,11 @@ async function start() {
         onEachFeature: (f, l) => l.bindTooltip(`<div dir="rtl"><b>${esc(f.properties.name_ar || f.properties.name_en || "مساحة خضراء")}</b></div>`, { sticky: true }) }).addTo(parksL);
       parks.features.filter(f => f.properties.name_ar || f.properties.name_en).forEach(f => { const c = centre(f); label(c.lat, c.lng, esc(f.properties.name_ar || f.properties.name_en), "park").addTo(parkLbl); });
     }
+    const icons = Object.fromEntries(Object.keys(POI_SYM).map(k => [k, poiIcon(k)]));
     Object.keys(POI_SYM).forEach((k, i) => {
       const fc = pois[i]; if (!fc) return;
       fc.features.forEach(f => { const [x, y] = f.geometry.coordinates, sym = POI_SYM[k];
-        withF(f, sym.dot ? L.circleMarker([y, x], { renderer: poiCanvas, radius: 4, color: "#fff", weight: 1.2, fillColor: sym.bg, fillOpacity: 1 })
-                 : L.marker([y, x], { pane: "pts", icon: poiIcon(k) })).bindTooltip(poiTip(k, f.properties)).addTo(poiL[k]); });
+        withF(f, L.marker([y, x], { pane: "pts", icon: icons[k] })).bindTooltip(poiTip(k, f.properties)).addTo(poiL[k]); });
     });
     document.querySelectorAll("#layers input[data-osm]").forEach(i => { i.disabled = false; i.closest("label").classList.remove("off"); });
     const note = $("osmNote"); if (note) note.textContent = `OpenStreetMap · ${OSM.generated}`;
@@ -336,14 +338,14 @@ async function start() {
     ["osmRoads", "الطرق السريعة والرئيسية", osmRoadsL, true, `<i class="ln" style="background:#f47a7a;box-shadow:0 0 0 1px #d04545"></i>`, 1],
     ["streets", "الشوارع الداخلية", osmStreetsL, true, `<i class="ln" style="background:#9a9a9a"></i>`, 1],
     ["parks", "الحدائق والمساحات الخضراء", parksL, true, `<i style="background:#a5d98a;border:1px solid #5a9e3c"></i>`, 1],
-    ["hotels", "الفنادق", poiL.hotels, true, `<i class="ico" style="background:#6a1b9a"></i>`, 1],
-    ["apartments", "الشقق الفندقية", poiL.apartments, true, `<i class="ico" style="background:#c2185b"></i>`, 1],
-    ["hospitals", "المستشفيات", poiL.hospitals, false, `<i class="ico" style="background:#d62728">+</i>`, 1],
-    ["universities", "الجامعات والكليات", poiL.universities, false, `<i class="ico" style="background:#3949ab"></i>`, 1],
-    ["malls", "مراكز التسوق", poiL.malls, false, `<i class="ico" style="background:#ef6c00"></i>`, 1],
-    ["attractions", "المعالم السياحية والمتاحف", poiL.attractions, false, `<i class="ico" style="background:#6d4c41">★</i>`, 1],
-    ["mosques", "المساجد", poiL.mosques, false, `<i class="dot" style="background:#138d75"></i>`, 1],
-    ["schools", "المدارس", poiL.schools, false, `<i class="dot" style="background:#c49a00"></i>`, 1],
+    ["hotels", "الفنادق", poiL.hotels, true, poiSvg("hotels", 18), 1],
+    ["apartments", "الشقق الفندقية", poiL.apartments, true, poiSvg("apartments", 18), 1],
+    ["hospitals", "المستشفيات", poiL.hospitals, false, poiSvg("hospitals", 18), 1],
+    ["universities", "الجامعات والكليات", poiL.universities, false, poiSvg("universities", 18), 1],
+    ["malls", "مراكز التسوق", poiL.malls, false, poiSvg("malls", 18), 1],
+    ["attractions", "المعالم السياحية والمتاحف", poiL.attractions, false, poiSvg("attractions", 18), 1],
+    ["mosques", "المساجد", poiL.mosques, false, poiSvg("mosques", 18), 1],
+    ["schools", "المدارس", poiL.schools, false, poiSvg("schools", 18), 1],
     ["الأماكن"],
     ["towns", "المدن والبلدات", twL, false, `<i class="dot" style="background:#2b2a27"></i>`],
     ["labels", "الأسماء", L.layerGroup(), false, `<i style="background:none;font-style:normal;font-size:11px;line-height:11px;font-weight:700">أ</i>`],
@@ -427,7 +429,7 @@ async function start() {
     keyRows("خطوط الحافلات", Object.values(ROUTE_SYM).map(v => [`<i class="ksw ln" style="height:${Math.max(3, v.weight)}px;background:${v.color}"></i>`, v.ar])) +
     keyRows("مواقف الحافلات (تظهر بحسب الزووم)", Object.entries(SHELTER_SYM).map(([k, v]) => [dotSw(v), `${SH_AR[k]} <small>· من زووم ${v.z}</small>`])) +
     keyRows("المطارات", Object.keys(AP_CLS).map(k => [apIcon(k).options.html.replace(/width="\d+" height="\d+"/, 'width="18" height="18"'), AP_CLS[k].ar])) +
-    keyRows("الأماكن (OpenStreetMap)", Object.entries(POI_SYM).map(([k, v]) => [v.dot ? `<i class="ksw" style="width:9px;height:9px;border-radius:50%;background:${v.bg}"></i>` : poiIcon(k).options.html.replace('width="22" height="22"', 'width="18" height="18"'), `${v.ar} <small>· من زووم ${v.z}</small>`]));
+    keyRows("الأماكن (OpenStreetMap)", Object.entries(POI_SYM).map(([k, v]) => [poiSvg(k, 20), `${v.ar} <small>· من زووم ${v.z}</small>`]));
 
   // ---------------- background maps
   const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
