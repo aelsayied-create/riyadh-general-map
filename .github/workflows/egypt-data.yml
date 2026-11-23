@@ -1,0 +1,28 @@
+name: Egypt (Greater Cairo) OpenStreetMap data
+on:
+  push:
+    branches: [egypt-data]
+    paths: [scripts/cairo_osm.py, .github/workflows/egypt-data.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  cairo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: |
+          pip install shapely osmium
+          sudo apt-get install -y -q osmium-tool
+      - run: python scripts/cairo_osm.py
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898699+github-actions[bot]@users.noreply.github.com"
+          git add web/data/osm
+          git commit -m "Greater Cairo OpenStreetMap data $(date +%F)"
+          git pull --rebase -X theirs
+          git push
